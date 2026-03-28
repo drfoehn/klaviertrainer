@@ -65,6 +65,15 @@ def init_db():
             size_bytes INTEGER,
             uploaded   INTEGER DEFAULT (strftime('%s','now'))
         );
+
+        CREATE TABLE IF NOT EXISTS chord_progressions (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            title      TEXT    NOT NULL,
+            artist     TEXT,
+            chords     TEXT    NOT NULL,
+            added      INTEGER DEFAULT (strftime('%s','now'))
+        );
         """)
 
 
@@ -326,6 +335,54 @@ def delete_favorite(fav_id):
             if pdf_path.exists():
                 pdf_path.unlink()
         db.execute("DELETE FROM favorites WHERE id=? AND user_id=?", (fav_id, uid))
+    return jsonify({"ok": True})
+
+
+# ── Chord Progressions API ───────────────────────────────────────────
+@app.route("/api/progressions", methods=["GET"])
+@login_required
+def get_progressions():
+    uid, _ = current_user()
+    with get_db() as db:
+        rows = db.execute(
+            "SELECT id, title, artist, chords, added FROM chord_progressions "
+            "WHERE user_id=? ORDER BY added DESC", (uid,)
+        ).fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/progressions", methods=["POST"])
+@login_required
+def add_progression():
+    uid, _ = current_user()
+    data   = request.get_json(force=True)
+    title  = (data.get("title") or "").strip()
+    artist = (data.get("artist") or "").strip() or None
+    chords = data.get("chords")
+    if not title:
+        return jsonify({"error": "Kein Titel"}), 400
+    if not chords or not isinstance(chords, list) or len(chords) < 2:
+        return jsonify({"error": "Mindestens 2 Akkorde erforderlich"}), 400
+    import json
+    with get_db() as db:
+        cur = db.execute(
+            "INSERT INTO chord_progressions (user_id, title, artist, chords) VALUES (?,?,?,?)",
+            (uid, title, artist, json.dumps(chords))
+        )
+    return jsonify({"ok": True, "id": cur.lastrowid})
+
+
+@app.route("/api/progressions/<int:prog_id>", methods=["DELETE"])
+@login_required
+def delete_progression(prog_id):
+    uid, _ = current_user()
+    with get_db() as db:
+        row = db.execute(
+            "SELECT id FROM chord_progressions WHERE id=? AND user_id=?", (prog_id, uid)
+        ).fetchone()
+        if not row:
+            return jsonify({"error": "Nicht gefunden"}), 404
+        db.execute("DELETE FROM chord_progressions WHERE id=?", (prog_id,))
     return jsonify({"ok": True})
 
 

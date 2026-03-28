@@ -315,6 +315,49 @@ input[type=text]::placeholder{color:var(--muted)}
 /* Sheet search */
 .sheet-search-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .sheet-search-bar input{flex:1;min-width:200px}
+
+/* ── VOICE LEADING ── */
+.vl-chord-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.vl-arrow-v{text-align:center;font-size:1.1rem;color:var(--muted);padding:2px 0;line-height:1}
+.vl-root-row{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.vl-root-pill{font-family:'Instrument Serif',serif;font-size:.9rem;min-width:32px;height:28px;border:1px solid var(--border);border-radius:20px;background:var(--surface);color:var(--muted);cursor:pointer;transition:all .15s;padding:0 7px}
+.vl-root-pill:hover{border-color:var(--accent);color:var(--accent)}
+.vl-root-pill.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.vl-cat-row{display:flex;gap:4px;flex-wrap:wrap}
+.vl-cat-pill{font-family:'JetBrains Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;padding:3px 9px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:var(--surface);color:var(--muted);transition:all .15s;font-weight:500}
+.vl-cat-pill:hover{border-color:var(--accent);color:var(--accent)}
+.vl-cat-pill.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.vl-type-row{display:flex;gap:4px;flex-wrap:wrap}
+.vl-type-pill{font-family:'JetBrains Mono',monospace;font-size:.62rem;padding:4px 10px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:var(--surface);color:var(--muted);transition:all .15s}
+.vl-type-pill:hover{border-color:var(--gold);color:var(--gold)}
+.vl-type-pill.active{background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:600}
+.vl-selected-display{display:flex;align-items:baseline;gap:8px;padding-top:2px}
+.vl-sel-name{font-family:'Instrument Serif',serif;font-size:1.15rem;color:var(--accent2)}
+.vl-sel-type{font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.vl-result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.vl-result-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.vl-result-rank{font-family:'JetBrains Mono',monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);font-weight:600}
+.vl-chord-sequence{display:flex;align-items:flex-start;gap:6px;overflow-x:auto;padding-bottom:4px;flex-wrap:wrap}
+.vl-chord-block{display:flex;flex-direction:column;gap:6px}
+.vl-chord-label{display:flex;flex-direction:column;gap:3px}
+.vl-chord-name{font-family:'Instrument Serif',serif;font-size:1.1rem;color:var(--accent2)}
+.vl-inv-badge{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:2px 8px;display:inline-block}
+.vl-hands{display:flex;flex-direction:column;gap:5px}
+.vl-hand-block{display:flex;flex-direction:column;gap:2px}
+.vl-hand-block svg{transition:transform .2s ease,box-shadow .2s ease;cursor:zoom-in;border-radius:3px}
+.vl-hand-block svg:hover{transform:scale(2.2);box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:100;position:relative}
+.vl-hand-label{font-family:'JetBrains Mono',monospace;font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.vl-note-name{font-family:'JetBrains Mono',monospace;font-size:.55rem;color:var(--muted);margin-top:1px}
+.vl-seq-arrow{display:flex;flex-direction:column;align-items:center;gap:3px;align-self:center;padding:0 2px}
+.vl-seq-arrow-icon{font-size:1.2rem;color:var(--muted)}
+.vl-save-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.vl-prog-list{display:flex;flex-direction:column;gap:6px}
+.vl-prog-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;transition:all .2s}
+.vl-prog-item:hover{border-color:var(--accent);background:var(--accent-dim)}
+.vl-prog-info{display:flex;flex-direction:column;gap:2px}
+.vl-prog-title{font-family:'Instrument Serif',serif;font-size:.95rem;color:var(--text)}
+.vl-prog-meta{font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.vl-prog-actions{display:flex;gap:6px;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -356,6 +399,9 @@ input[type=text]::placeholder{color:var(--muted)}
   </button>
   <button class="tab" onclick="showPage('quinten',this)">
     <span class="de">Quintenzirkel</span><span class="en">Circle of 5ths</span>
+  </button>
+  <button class="tab" onclick="showPage('voicelead',this)">
+    <span class="de">Stimmführung</span><span class="en">Voice Leading</span>
   </button>
   <button class="tab" onclick="showPage('favorites',this)">
     <span class="de">Favoriten</span><span class="en">Favourites</span>
@@ -1831,6 +1877,7 @@ function showPage(id, btn){
   btn.classList.add('active');
   if(id==='notenlesen'&&!nrCurrent) nextNRQuestion();
   if(id==='quinten') initQZ();
+  if(id==='voicelead') vlInit();
 }
 
 // Patch detect note count to be lang-aware
@@ -2523,6 +2570,269 @@ function toggleTheme(){
 // QZ lang hook merged into setLang below
 
 // ════════════════════════════════════════════════════════
+// VOICE LEADING
+// ════════════════════════════════════════════════════════
+let vlInited = false;
+function vlInit() {
+  if (vlInited) return;
+  vlInited = true;
+  vlReset();
+  vlLoadProgs();
+}
+function vlReset() {
+  const list = document.getElementById('vl-chord-list');
+  list.innerHTML = '';
+  document.getElementById('vl-results').innerHTML = '';
+  vlAddChord('C', '');
+  vlAddChord('F', '');
+  vlAddChord('G', '');
+}
+function vlAddChord(defaultRoot, defaultSym) {
+  const list = document.getElementById('vl-chord-list');
+  if (list.querySelectorAll('.vl-chord-wrap').length > 0) {
+    const arr = document.createElement('div');
+    arr.className = 'vl-arrow-v';
+    arr.textContent = '↓';
+    list.appendChild(arr);
+  }
+  const wrap = document.createElement('div');
+  wrap.className = 'vl-chord-wrap';
+  wrap.dataset.root = defaultRoot || 'C';
+  wrap.dataset.sym  = defaultSym !== undefined ? defaultSym : '';
+  const initialDef  = CHORD_DEFS.find(d => d.sym === wrap.dataset.sym);
+  wrap.dataset.cat  = initialDef ? initialDef.cats[0] : 'maj';
+  function rebuild() {
+    const root = wrap.dataset.root, sym = wrap.dataset.sym, cat = wrap.dataset.cat;
+    wrap.innerHTML = '';
+    const rootRow = document.createElement('div');
+    rootRow.className = 'vl-root-row';
+    ALL_ROOTS.forEach(r => {
+      const btn = document.createElement('button');
+      btn.className = 'vl-root-pill' + (r === root ? ' active' : '');
+      btn.textContent = r;
+      btn.onclick = () => { wrap.dataset.root = r; rebuild(); };
+      rootRow.appendChild(btn);
+    });
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'btn sm danger';
+    removeBtn.style.marginLeft = 'auto';
+    removeBtn.textContent = '✕';
+    removeBtn.onclick = () => {
+      if (list.querySelectorAll('.vl-chord-wrap').length <= 2) return;
+      const prev = wrap.previousElementSibling;
+      const next = wrap.nextElementSibling;
+      if (prev && prev.classList.contains('vl-arrow-v')) prev.remove();
+      else if (next && next.classList.contains('vl-arrow-v')) next.remove();
+      wrap.remove();
+    };
+    rootRow.appendChild(removeBtn);
+    wrap.appendChild(rootRow);
+    const catRow = document.createElement('div');
+    catRow.className = 'vl-cat-row';
+    CATS.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'vl-cat-pill' + (c.id === cat ? ' active' : '');
+      btn.textContent = c.label;
+      btn.onclick = () => {
+        wrap.dataset.cat = c.id;
+        const filtered = CHORD_DEFS.filter(d => d.cats.includes(c.id));
+        if (!filtered.find(d => d.sym === wrap.dataset.sym))
+          wrap.dataset.sym = filtered[0]?.sym ?? '';
+        rebuild();
+      };
+      catRow.appendChild(btn);
+    });
+    wrap.appendChild(catRow);
+    const typeRow = document.createElement('div');
+    typeRow.className = 'vl-type-row';
+    CHORD_DEFS.filter(d => d.cats.includes(cat)).forEach(def => {
+      const btn = document.createElement('button');
+      btn.className = 'vl-type-pill' + (def.sym === sym ? ' active' : '');
+      btn.textContent = def.sym || 'maj';
+      btn.title = def.name + '  ' + def.formula;
+      btn.onclick = () => { wrap.dataset.sym = def.sym; rebuild(); };
+      typeRow.appendChild(btn);
+    });
+    wrap.appendChild(typeRow);
+    const ch = CHORD_DB.find(c => c.root === root && c.sym === sym);
+    if (ch) {
+      const sel = document.createElement('div');
+      sel.className = 'vl-selected-display';
+      sel.innerHTML = `<span class="vl-sel-name">${ch.displayName}</span><span class="vl-sel-type">${ch.name}</span>`;
+      wrap.appendChild(sel);
+    }
+  }
+  rebuild();
+  list.appendChild(wrap);
+}
+function vlGetChords() {
+  return [...document.getElementById('vl-chord-list').querySelectorAll('.vl-chord-wrap')]
+    .map(w => CHORD_DB.find(c => c.root === w.dataset.root && c.sym === w.dataset.sym))
+    .filter(Boolean);
+}
+function vlVoicingsFor(ch) {
+  const n = ch.midiBase.length, voicings = [], seen = new Set();
+  for (let inv = 0; inv < n; inv++) {
+    let notes = [...ch.midiBase];
+    for (let i = 0; i < inv; i++) { const lo = notes.shift(); notes.push(lo + 12); }
+    for (let shift = -3; shift <= 3; shift++) {
+      const s = notes.map(m => m + shift * 12);
+      const lo = Math.min(...s), hi = Math.max(...s);
+      if (lo < 48 || hi > 84) continue;
+      const key = [...s].sort((a,b)=>a-b).join(',');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      voicings.push({ inv, notes: s, centroid: s.reduce((a,b)=>a+b,0)/s.length });
+    }
+  }
+  return voicings;
+}
+function vlDist(v1, v2) {
+  if (v1.length === v2.length) {
+    const a = [...v1].sort((a,b)=>a-b), b = [...v2].sort((a,b)=>a-b);
+    return a.reduce((sum,n,i) => sum + Math.abs(n - b[i]), 0);
+  }
+  const c1 = v1.reduce((a,b)=>a+b,0)/v1.length, c2 = v2.reduce((a,b)=>a+b,0)/v2.length;
+  return Math.abs(c1-c2) * Math.max(v1.length, v2.length);
+}
+function vlFindTop3(chords) {
+  const K = 3, allV = chords.map(ch => vlVoicingsFor(ch));
+  let dp = allV[0].map((_, j) => [{cost: 0, path: [j]}]);
+  for (let i = 1; i < chords.length; i++) {
+    const newDp = allV[i].map(() => []);
+    for (let j = 0; j < allV[i].length; j++) {
+      const cands = [];
+      for (let k = 0; k < allV[i-1].length; k++) {
+        const d = vlDist(allV[i-1][k].notes, allV[i][j].notes);
+        for (const prev of dp[k]) cands.push({cost: prev.cost + d, path: [...prev.path, j]});
+      }
+      cands.sort((a,b) => a.cost - b.cost);
+      newDp[j] = cands.slice(0, K);
+    }
+    dp = newDp;
+  }
+  const all = dp.flat();
+  all.sort((a,b) => a.cost - b.cost);
+  const seen = new Set();
+  return all.filter(p => { const k=p.path.join(','); if(seen.has(k))return false; seen.add(k); return true; })
+    .slice(0, K).map(p => ({ cost: p.cost, voicings: p.path.map((vi,i) => allV[i][vi]) }));
+}
+function vlKbdSVG(hlMidis, rangeStart, rangeEnd, w, h, hlColor) {
+  const isLight = document.documentElement.classList.contains('light');
+  const whites = [];
+  for (let m = rangeStart; m <= rangeEnd; m++) { if (WPC.includes(m%12)) whites.push(m); }
+  const kw = w/whites.length, bw = kw*.62, bh = h*.62;
+  const bgC=isLight?'#e8ebf5':'#151820', wkC=isLight?'#fafbff':'#e8ecf5';
+  const bkC=isLight?'#1a1f35':'#0d0f14', bdC=isLight?'#c4c8de':'#3a4058';
+  let s=`<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="display:block;border-radius:3px">`;
+  s+=`<rect width="${w}" height="${h}" fill="${bgC}" rx="3"/>`;
+  whites.forEach((m,i)=>{
+    const hl=hlMidis.includes(m);
+    s+=`<rect x="${(i*kw+.5).toFixed(1)}" y=".5" width="${(kw-1).toFixed(1)}" height="${(h-1).toFixed(1)}" rx="2" fill="${hl?hlColor:wkC}" stroke="${hl?hlColor:bdC}" stroke-width=".5"/>`;
+  });
+  for(let m=rangeStart;m<=rangeEnd;m++){
+    if(WPC.includes(m%12))continue;
+    const x=(whites.filter(wm=>wm<m).length*kw-bw/2).toFixed(1), hl=hlMidis.includes(m);
+    s+=`<rect x="${x}" y="0" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="1.5" fill="${hl?hlColor:bkC}" stroke="rgba(0,0,0,.25)" stroke-width=".5"/>`;
+  }
+  return s+'</svg>';
+}
+function vlCalculate() {
+  const chords = vlGetChords(), res = document.getElementById('vl-results');
+  if (chords.length < 2) { res.innerHTML='<div class="notice"><span class="de">Mindestens 2 Akkorde eingeben.</span><span class="en">Please enter at least 2 chords.</span></div>'; return; }
+  const top = vlFindTop3(chords);
+  if (!top.length) { res.innerHTML='<div class="notice">Keine Voicings gefunden.</div>'; return; }
+  const isEn = document.documentElement.lang==='en';
+  const rankLabels = isEn ? ['Option 1 — least movement','Option 2','Option 3'] : ['Option 1 — wenigste Bewegung','Option 2','Option 3'];
+  const accentC = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#6c8ef5';
+  const goldC   = getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()||'#e8b84b';
+  let html='';
+  top.forEach((result,ri)=>{
+    html+=`<div class="vl-result-card"${ri===0?' style="border-color:var(--accent)"':''}>`;
+    html+=`<div class="vl-result-header"><span class="vl-result-rank">${rankLabels[ri]}</span></div>`;
+    html+=`<div class="vl-chord-sequence">`;
+    result.voicings.forEach((v,ci)=>{
+      const ch=chords[ci];
+      if(ci>0) html+=`<div class="vl-seq-arrow"><span class="vl-seq-arrow-icon">→</span></div>`;
+      const rootPCraw=ch.root.replace('Eb','D#').replace('Ab','G#').replace('Bb','A#');
+      const rootPC=N.indexOf(rootPCraw), lhMidi=36+rootPC;
+      const invLbl=v.inv>0?invName(v.inv):(isEn?'Root pos.':'Grundlage');
+      const rhNames=[...v.notes].sort((a,b)=>a-b).map(n=>N[n%12]).join(' · ');
+      html+=`<div class="vl-chord-block">
+        <div class="vl-chord-label"><span class="vl-chord-name">${ch.displayName}</span><span class="vl-inv-badge">${invLbl}</span></div>
+        <div class="vl-hands">
+          <div class="vl-hand-block"><div class="vl-hand-label">${isEn?'Left hand':'Linke Hand'}</div>${vlKbdSVG([lhMidi],36,47,88,38,goldC)}<div class="vl-note-name">${N[rootPC]}</div></div>
+          <div class="vl-hand-block"><div class="vl-hand-label">${isEn?'Right hand':'Rechte Hand'}</div>${vlKbdSVG(v.notes,48,83,216,48,accentC)}<div class="vl-note-name">${rhNames}</div></div>
+        </div></div>`;
+    });
+    html+=`</div></div>`;
+  });
+  res.innerHTML=html;
+}
+
+// ── Progression Save / Load ──────────────────────────────────────────
+async function vlSave() {
+  const title  = document.getElementById('vl-save-title').value.trim();
+  const artist = document.getElementById('vl-save-artist').value.trim();
+  if (!title) { toast(t('Bitte Songtitel eingeben','Please enter a song title')); return; }
+  const chords = vlGetChords();
+  if (chords.length < 2) { toast(t('Mindestens 2 Akkorde erforderlich','Need at least 2 chords')); return; }
+  const payload = chords.map(ch => ({ root: ch.root, sym: ch.sym }));
+  const data = await apiFetch('/api/progressions', {
+    method: 'POST',
+    body: JSON.stringify({ title, artist, chords: payload })
+  });
+  if (!data) return;
+  if (data.ok) {
+    toast('✓ ' + t('Gespeichert','Saved'));
+    document.getElementById('vl-save-title').value  = '';
+    document.getElementById('vl-save-artist').value = '';
+    vlLoadProgs();
+  } else {
+    toast(data.error || t('Fehler','Error'));
+  }
+}
+async function vlLoadProgs() {
+  const data = await apiFetch('/api/progressions');
+  if (!data) return;
+  const el = document.getElementById('vl-prog-list');
+  const isEn = document.documentElement.lang === 'en';
+  if (!data.length) {
+    el.innerHTML = `<div class="empty-state">${isEn?'No saved progressions yet.':'Noch keine gespeicherten Progressionen.'}</div>`;
+    return;
+  }
+  el.innerHTML = data.map(p => {
+    const date = new Date(p.added * 1000).toLocaleDateString('de-AT');
+    const chordsArr = JSON.parse(p.chords);
+    const preview = chordsArr.map(c => c.root + (c.sym || '')).join(' → ');
+    return `<div class="vl-prog-item">
+      <div class="vl-prog-info">
+        <span class="vl-prog-title">${p.title}${p.artist ? ' <span style="color:var(--muted);font-style:italic">— '+p.artist+'</span>' : ''}</span>
+        <span class="vl-prog-meta">${preview} · ${date}</span>
+      </div>
+      <div class="vl-prog-actions">
+        <button class="btn sm" onclick="vlLoadProg(${p.id},'${encodeURIComponent(JSON.stringify(chordsArr))}')">
+          ${isEn?'Load':'Laden'}
+        </button>
+        <button class="btn sm danger" onclick="vlDeleteProg(${p.id})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function vlLoadProg(id, encoded) {
+  const chords = JSON.parse(decodeURIComponent(encoded));
+  const list = document.getElementById('vl-chord-list');
+  list.innerHTML = '';
+  document.getElementById('vl-results').innerHTML = '';
+  chords.forEach(c => vlAddChord(c.root, c.sym));
+  window.scrollTo({ top: list.offsetTop - 80, behavior: 'smooth' });
+}
+async function vlDeleteProg(id) {
+  const data = await apiFetch('/api/progressions/' + id, { method: 'DELETE' });
+  if (data?.ok) { toast(t('Gelöscht','Deleted')); vlLoadProgs(); }
+}
+
+// ════════════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════════════
 buildKeyboard('keyboard-lib');
@@ -2543,6 +2853,64 @@ document.getElementById('practice-feedback').innerHTML=
   '<span class="en">Connect MIDI keyboard and start practice</span>';
 </script>
 
+
+<!-- ═══ STIMMFÜHRUNG ═══ -->
+<div class="page" id="page-voicelead">
+  <div class="section-title">
+    <span class="de">Optimale Stimmführung</span>
+    <span class="en">Optimal Voice Leading</span>
+  </div>
+  <p style="font-size:.7rem;color:var(--muted);line-height:1.6">
+    <span class="de">Akkordfolge eingeben → die <b style="color:var(--text)">3 Voicings mit den wenigsten Handbewegungen</b> werden berechnet. Linke Hand: Grundton. Rechte Hand: Akkord.</span>
+    <span class="en">Enter a chord progression → the <b style="color:var(--text)">3 voicings with least hand movement</b> are calculated. Left hand: root. Right hand: chord.</span>
+  </p>
+
+  <!-- Chord builder -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+    <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-family:'JetBrains Mono',monospace;font-weight:600">
+      <span class="de">Akkordfolge</span><span class="en">Chord Progression</span>
+    </div>
+    <div id="vl-chord-list" style="display:flex;flex-direction:column;gap:0"></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn sm" onclick="vlAddChord()">
+        <span class="de">+ Akkord</span><span class="en">+ Chord</span>
+      </button>
+      <button class="btn primary" onclick="vlCalculate()">
+        <span class="de">Berechnen</span><span class="en">Calculate</span>
+      </button>
+      <button class="btn sm danger" onclick="vlReset()">
+        <span class="de">Zurücksetzen</span><span class="en">Reset</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="vl-results" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <!-- Save form -->
+  <div class="vl-save-box">
+    <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-family:'JetBrains Mono',monospace;font-weight:600">
+      <span class="de">Akkordfolge speichern</span><span class="en">Save Progression</span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input type="text" id="vl-save-title" style="flex:1;min-width:160px"
+        placeholder="Songtitel *" />
+      <input type="text" id="vl-save-artist" style="flex:1;min-width:140px"
+        placeholder="Interpret (optional)" />
+      <button class="btn primary" onclick="vlSave()">
+        <span class="de">Speichern</span><span class="en">Save</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Saved progressions -->
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div class="section-title">
+      <span class="de">Gespeicherte Progressionen</span><span class="en">Saved Progressions</span>
+    </div>
+    <div id="vl-prog-list"></div>
+  </div>
+</div>
 
 <!-- ═══ FAVORITEN ═══ -->
 <div class="page" id="page-favorites">
