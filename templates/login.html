@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klaviertrainer – Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0f14;--surface:#151820;--surface2:#1c2030;--border:#252a38;
+  --accent:#6c8ef5;--accent2:#8fa8ff;--accent-dim:rgba(108,142,245,.12);
+  --red:#f56c6c;--green:#52c97a;--text:#e8ecf5;--muted:#5a6480;
+  --gold:#e8b84b;--radius:12px;
+}
+:root.light{
+  --bg:#f0f2f8;--surface:#fff;--surface2:#e8ebf5;--border:#d4d8ea;
+  --accent:#4a6ef0;--accent2:#3558e0;--accent-dim:rgba(74,110,240,.08);
+  --red:#e03535;--green:#1e9950;--text:#1a1f35;--muted:#7a82a0;
+  --gold:#c47c10;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:40px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,.3)}
+.logo{font-family:'Instrument Serif',serif;font-size:2rem;color:var(--accent2);
+  text-align:center;margin-bottom:6px}
+.logo span{color:var(--gold);font-style:italic}
+.tagline{text-align:center;font-size:.78rem;color:var(--muted);margin-bottom:32px}
+
+.field{margin-bottom:16px}
+label{display:block;font-size:.72rem;font-family:'JetBrains Mono',monospace;
+  text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px;font-weight:600}
+input{width:100%;background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:11px 14px;color:var(--text);font-size:.9rem;outline:none;
+  font-family:'Plus Jakarta Sans',sans-serif;transition:border-color .2s}
+input:focus{border-color:var(--accent)}
+input::placeholder{color:var(--muted)}
+.btn-full{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;
+  border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:600;
+  font-family:'Plus Jakarta Sans',sans-serif;margin-top:8px;transition:all .2s;
+  letter-spacing:.02em}
+.btn-full:hover{background:var(--accent2);transform:translateY(-1px)}
+.btn-full:active{transform:translateY(0)}
+.msg{padding:10px 14px;border-radius:8px;font-size:.8rem;margin-top:12px;display:none;text-align:center}
+.msg.error{background:rgba(245,108,108,.1);border:1px solid var(--red);color:var(--red)}
+.msg.success{background:rgba(82,201,122,.1);border:1px solid var(--green);color:var(--green)}
+.theme-btn{position:fixed;top:16px;right:16px;background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:5px 14px;cursor:pointer;font-family:'JetBrains Mono',monospace;
+  font-size:.68rem;color:var(--muted);transition:all .2s}
+.theme-btn:hover{border-color:var(--accent);color:var(--accent)}
+</style>
+</head>
+<body>
+<button class="theme-btn" onclick="toggleTheme()" id="theme-btn">☀ Hell</button>
+<div class="card">
+  <div class="logo">Klavier<span>trainer</span></div>
+  <div class="tagline">Akkorde · Noten · Üben</div>
+  <div style="font-size:.72rem;color:var(--muted);text-align:center;margin-bottom:24px">Zugang nur auf Einladung</div>
+
+
+
+  <!-- Login -->
+  <div id="tab-login">
+    <div class="field">
+      <label>Benutzername</label>
+      <input type="text" id="login-user" placeholder="Benutzername" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Passwort</label>
+      <input type="password" id="login-pw" placeholder="Passwort" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn-full" onclick="doLogin()">Anmelden →</button>
+    <div class="msg" id="login-msg"></div>
+  </div>
+
+
+</div>
+
+<script>
+async function doLogin(){
+  const user=document.getElementById('login-user').value.trim();
+  const pw=document.getElementById('login-pw').value;
+  const msg=document.getElementById('login-msg');
+  msg.style.display='none';
+  try{
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username:user,password:pw})});
+    const d=await r.json();
+    if(d.ok){window.location='/';}
+    else{msg.textContent=d.error||'Fehler';msg.className='msg error';msg.style.display='block';}
+  }catch(e){msg.textContent='Verbindungsfehler';msg.className='msg error';msg.style.display='block';}
+}
+
+let dark=true;
+function toggleTheme(){
+  dark=!dark;document.documentElement.classList.toggle('light',!dark);
+  document.getElementById('theme-btn').textContent=dark?'☀ Hell':'☾ Dunkel';
+}
+// Default light
+dark=false;document.documentElement.classList.add('light');
+document.getElementById('theme-btn').textContent='☾ Dunkel';
+</script>
+</body>
+</html>

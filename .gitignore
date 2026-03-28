@@ -1,0 +1,20 @@
+# Flask / Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.venv/
+*.egg-info/
+
+# App-generated secrets & data
+.secret_key
+klaviertrainer.db
+*.db-shm
+*.db-wal
+
+# User uploads
+uploads/
+
+# macOS
+.DS_Store

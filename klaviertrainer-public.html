@@ -1,0 +1,2445 @@
+<!DOCTYPE html>
+<html lang="de" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="page-title">Klaviertrainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  /* Dark theme */
+  --bg:#0d0f14;--surface:#151820;--surface2:#1c2030;--border:#252a38;
+  --accent:#6c8ef5;--accent2:#8fa8ff;--accent-dim:rgba(108,142,245,.12);
+  --gold:#e8b84b;--gold2:#f5cc6e;--gold-dim:rgba(232,184,75,.1);
+  --red:#f56c6c;--green:#52c97a;--text:#e8ecf5;--muted:#5a6480;
+  --key-white:#e8ecf5;--key-black:#0d0f14;--key-border:#3a4058;
+  --shadow:0 4px 24px rgba(0,0,0,.5);--shadow-sm:0 2px 8px rgba(0,0,0,.3);
+  --radius:10px;--radius-sm:6px;
+}
+:root.light{
+  --bg:#f0f2f8;--surface:#ffffff;--surface2:#e8ebf5;--border:#d4d8ea;
+  --accent:#4a6ef0;--accent2:#3558e0;--accent-dim:rgba(74,110,240,.08);
+  --gold:#c47c10;--gold2:#d99020;--gold-dim:rgba(196,124,16,.08);
+  --red:#e03535;--green:#1e9950;--text:#1a1f35;--muted:#7a82a0;
+  --key-white:#fafbff;--key-black:#1a1f35;--key-border:#c4c8de;
+  --shadow:0 4px 24px rgba(0,0,0,.08);--shadow-sm:0 2px 8px rgba(0,0,0,.05);
+  --radius:10px;--radius-sm:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;transition:background .3s,color .3s;font-size:14px}
+
+/* ── HEADER ── */
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--border);background:var(--surface);gap:12px;flex-wrap:wrap;backdrop-filter:blur(12px)}
+.logo{font-family:'Instrument Serif',serif;font-size:1.45rem;color:var(--accent2);letter-spacing:-.01em}
+.logo span{color:var(--gold);font-style:italic}
+.header-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.midi-status{display:flex;align-items:center;gap:6px;font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.06em}
+.midi-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:all .3s}
+.midi-dot.connected{background:var(--green);box-shadow:0 0 8px var(--green)}
+.midi-dot.error{background:var(--red)}
+.theme-btn{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 14px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted);transition:all .2s}
+.theme-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── TABS ── */
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;padding:0 10px;gap:2px}
+.tab{padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;color:var(--muted);border:none;background:none;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;font-weight:500}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab:hover:not(.active){color:var(--text)}
+.fav-badge{background:var(--accent);color:#fff;border-radius:10px;padding:1px 6px;font-size:.56rem;margin-left:4px;display:inline-block;vertical-align:middle}
+
+/* ── PAGES ── */
+.page{display:none;padding:24px 28px;flex:1;flex-direction:column;gap:20px;max-width:1200px;margin:0 auto;width:100%}
+.page.active{display:flex}
+
+/* ── KEYBOARD ── */
+.keyboard-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 16px}
+.keyboard{position:relative;display:flex;height:130px;user-select:none;overflow:visible}
+.key-white{position:relative;width:40px;height:130px;background:var(--key-white);border:1px solid var(--key-border);border-radius:0 0 6px 6px;cursor:pointer;flex-shrink:0;transition:background .06s;z-index:1;box-shadow:0 2px 4px rgba(0,0,0,.15)}
+.key-white.active{background:var(--gold2) !important}
+.key-white.inv1{background:#7ec8f0}
+.key-white.inv2{background:#f0b07e}
+.key-white.inv3{background:#bf9ef5}
+.key-white.detect{background:#7ee8b0 !important}
+.key-black{position:absolute;width:25px;height:84px;background:var(--key-black);border-radius:0 0 5px 5px;cursor:pointer;z-index:2;transition:background .06s;top:0;box-shadow:0 4px 6px rgba(0,0,0,.4)}
+.key-black.active{background:var(--gold) !important}
+.key-black.inv1{background:#3a88b8}
+.key-black.inv2{background:#c06828}
+.key-black.inv3{background:#8048d0}
+.key-black.detect{background:#28b870 !important}
+.key-label{position:absolute;bottom:5px;width:100%;text-align:center;font-size:.5rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+
+/* ── CHORD INFO ── */
+.chord-info{display:grid;grid-template-columns:auto 1fr auto;gap:20px;align-items:center;background:linear-gradient(135deg,var(--accent-dim),var(--gold-dim));border:1px solid var(--border);border-radius:var(--radius);padding:18px 22px}
+.ci-name{font-family:'Instrument Serif',serif;font-size:2.2rem;color:var(--accent2);line-height:1}
+.ci-sub{font-size:.65rem;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.12em;font-family:'JetBrains Mono',monospace}
+.ci-notes{font-size:.8rem;color:var(--text);line-height:1.7;font-weight:500}
+.ci-formula{font-size:.65rem;color:var(--muted);margin-top:4px;font-family:'JetBrains Mono',monospace}
+
+/* ── INVERSION TABS ── */
+.inv-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.inv-btn{font-family:'JetBrains Mono',monospace;font-size:.62rem;padding:5px 12px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:var(--surface2);color:var(--muted);transition:all .2s;font-weight:500}
+.inv-btn:hover{border-color:var(--accent);color:var(--accent)}
+.inv-btn.active{color:#fff;border-color:transparent}
+.inv-btn.active.i0{background:var(--accent)}
+.inv-btn.active.i1{background:#3a88b8}
+.inv-btn.active.i2{background:#c06828}
+.inv-btn.active.i3{background:#8048d0}
+
+/* ── LIBRARY ── */
+.lib-layout{display:grid;grid-template-columns:60px 1fr;gap:0;flex:1;min-height:280px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.root-col{display:flex;flex-direction:column;border-right:1px solid var(--border);padding:8px 0;gap:1px;overflow-y:auto;background:var(--surface)}
+.root-btn{font-family:'Instrument Serif',serif;font-size:1.05rem;color:var(--muted);background:none;border:none;cursor:pointer;padding:8px 0;text-align:center;transition:all .2s;border-left:3px solid transparent;width:100%;font-weight:400}
+.root-btn:hover{color:var(--accent);background:var(--accent-dim)}
+.root-btn.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-dim);font-weight:600}
+.lib-right{display:flex;flex-direction:column;gap:12px;padding:14px;overflow-y:auto;background:var(--surface2)}
+.cat-bar{display:flex;gap:5px;flex-wrap:wrap}
+.cat-btn{font-family:'JetBrains Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;padding:4px 10px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:var(--surface);color:var(--muted);transition:all .2s;font-weight:500}
+.cat-btn:hover{border-color:var(--accent);color:var(--accent)}
+.cat-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:8px}
+.lib-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 13px;cursor:pointer;transition:all .18s}
+.lib-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+.lib-card.selected{border-color:var(--accent);background:var(--accent-dim);box-shadow:0 0 0 2px var(--accent-dim)}
+.lc-name{font-family:'Instrument Serif',serif;font-size:1.15rem;color:var(--accent2)}
+.lc-type{font-size:.58rem;color:var(--muted);margin-top:1px;text-transform:uppercase;letter-spacing:.1em;font-family:'JetBrains Mono',monospace}
+.lc-notes{font-size:.62rem;color:var(--text);margin-top:5px;line-height:1.4;opacity:.7}
+.lc-formula{font-size:.58rem;color:var(--muted);margin-top:3px;font-family:'JetBrains Mono',monospace}
+.lc-staff{width:100%;margin-top:6px;display:block}
+
+/* ── DETECT ── */
+.detect-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+.detect-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:7px;margin-top:10px}
+.detect-section-label{grid-column:1/-1;font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin:4px 0 2px;font-family:'JetBrains Mono',monospace;font-weight:600}
+.detect-section-label.rootless{color:var(--muted)}
+.detect-match{padding:10px 11px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);transition:all .18s;cursor:pointer;display:flex;flex-direction:column;gap:3px}
+.detect-match:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.detect-match.top{border-color:var(--accent);background:var(--accent-dim)}
+.detect-match.hit{border-color:var(--green) !important;background:rgba(82,201,122,.1) !important}
+.dm-name{font-family:'Instrument Serif',serif;font-size:1.1rem;color:var(--accent2)}
+.detect-match.rootless .dm-name{color:var(--muted)}
+.dm-type{font-size:.56rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace}
+.dm-notes{font-size:.58rem;color:var(--text);margin-top:2px;line-height:1.3;opacity:.7}
+.detect-hint{font-size:.7rem;color:var(--muted);text-align:center;padding:14px;grid-column:1/-1}
+
+/* ── NOTE PILLS ── */
+.notes-display{display:flex;gap:5px;flex-wrap:wrap}
+.note-pill{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 11px;font-size:.66rem;color:var(--muted);transition:all .2s;font-family:'JetBrains Mono',monospace;font-weight:500}
+.note-pill.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ── PRACTICE ── */
+.chord-panel-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px}
+.card-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:8px;font-family:'JetBrains Mono',monospace;font-weight:600}
+.card-value{font-family:'Instrument Serif',serif;font-size:1.8rem;color:var(--accent2);line-height:1}
+.card-sub{font-size:.7rem;color:var(--muted);margin-top:5px}
+.feedback{text-align:center;font-size:.76rem;letter-spacing:.05em;padding:12px 16px;border-radius:var(--radius-sm);background:var(--surface2);border:1px solid var(--border);color:var(--muted);transition:all .3s;min-height:44px;display:flex;align-items:center;justify-content:center;font-weight:500}
+.feedback.correct{border-color:var(--green);color:var(--green);background:rgba(82,201,122,.08)}
+.feedback.wrong{border-color:var(--red);color:var(--red);background:rgba(245,108,108,.08)}
+.practice-controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.timer-display{font-size:1.7rem;font-family:'Instrument Serif',serif;color:var(--gold);min-width:52px}
+.score-row{display:flex;gap:20px;font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.score-val{color:var(--accent2);font-weight:600}
+.progress-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width 1s linear}
+
+/* ── BUTTONS ── */
+.btn{font-family:'JetBrains Mono',monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;padding:8px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer;transition:all .2s;background:var(--surface);color:var(--text);font-weight:500}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent2);border-color:var(--accent2)}
+.btn.danger{border-color:var(--red);color:var(--red)}
+.btn.danger:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.btn.sm{padding:4px 10px;font-size:.62rem}
+select,input[type=text]{font-family:'JetBrains Mono',monospace;font-size:.7rem;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;outline:none;transition:border-color .2s}
+select:focus,input[type=text]:focus{border-color:var(--accent)}
+input[type=text]::placeholder{color:var(--muted)}
+
+/* ── SECTION TITLES ── */
+.section-title{font-family:'Instrument Serif',serif;font-size:1.1rem;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:8px;display:flex;align-items:center;gap:8px}
+.section-title::before{content:'';display:block;width:3px;height:18px;background:var(--accent);border-radius:2px;flex-shrink:0}
+
+/* ── PDF ── */
+.pdf-drop{border:2px dashed var(--border);border-radius:var(--radius);padding:40px;text-align:center;cursor:pointer;transition:all .2s;color:var(--muted);background:var(--surface)}
+.pdf-drop:hover,.pdf-drop.drag-over{border-color:var(--accent);color:var(--text);background:var(--accent-dim)}
+.pdf-drop-icon{font-size:2rem;margin-bottom:10px}
+.pdf-drop-text{font-size:.76rem;letter-spacing:.05em;font-weight:500}
+.pdf-drop-sub{font-size:.64rem;color:var(--muted);margin-top:5px}
+#pdf-input{display:none}
+.pdf-controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.page-indicator{font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+#pdf-canvas{max-width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);display:none}
+
+/* ── SEARCH ── */
+.search-row{display:flex;gap:8px}
+.search-row input{flex:1}
+.search-results{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
+.result-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;transition:all .2s}
+.result-item:hover{border-color:var(--accent);background:var(--accent-dim)}
+.result-title{font-size:.76rem;color:var(--text);font-weight:600}
+.result-snippet{font-size:.63rem;color:var(--muted);margin-top:2px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.result-actions{display:flex;gap:6px;flex-shrink:0}
+.empty-state{text-align:center;color:var(--muted);font-size:.72rem;padding:18px}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.notice{font-size:.66rem;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;line-height:1.6;border-left:3px solid var(--accent)}
+.notice a{color:var(--accent);text-decoration:none;font-weight:600}
+
+/* ── FAVORITES ── */
+.fav-list{display:flex;flex-direction:column;gap:8px}
+.fav-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;transition:all .2s}
+.fav-item:hover{border-color:var(--accent);background:var(--accent-dim)}
+.fav-title{font-family:'Instrument Serif',serif;font-size:.92rem;color:var(--text)}
+.fav-sub{font-size:.62rem;color:var(--muted);margin-top:2px}
+.fav-actions{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap}
+.fav-empty{text-align:center;padding:28px;color:var(--muted);font-size:.74rem;border:2px dashed var(--border);border-radius:var(--radius);line-height:1.7;background:var(--surface)}
+
+/* ── YOUTUBE ── */
+.yt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.yt-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;cursor:pointer;transition:all .2s;text-decoration:none;display:block}
+.yt-card:hover{border-color:#e03535;transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+.yt-thumb{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:var(--surface2)}
+.yt-thumb-ph{width:100%;aspect-ratio:16/9;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--muted)}
+.yt-title{font-size:.67rem;color:var(--text);padding:8px 10px 3px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:500}
+.yt-channel{font-size:.6rem;color:var(--muted);padding:0 10px 8px;font-family:'JetBrains Mono',monospace}
+
+/* ── NOTE READING ── */
+.note-staff-wrap{display:flex;flex-direction:column;align-items:center;gap:18px;width:100%}
+.staff-svg{width:100%;max-width:520px;filter:drop-shadow(0 4px 16px rgba(0,0,0,.2));border-radius:var(--radius);overflow:hidden}
+.nr-options{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.nr-opt{font-family:'Instrument Serif',serif;font-size:1.25rem;background:var(--surface);border:2px solid var(--border);border-radius:var(--radius-sm);padding:10px 22px;cursor:pointer;color:var(--text);transition:all .2s;min-width:60px;text-align:center;font-weight:400}
+.nr-opt:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.nr-opt.correct{border-color:var(--green);background:rgba(82,201,122,.1);color:var(--green)}
+.nr-opt.wrong{border-color:var(--red);background:rgba(245,108,108,.08);color:var(--red)}
+.nr-feedback{font-size:.84rem;min-height:28px;text-align:center;color:var(--muted);transition:color .2s;font-weight:500}
+.nr-feedback.ok{color:var(--green)}
+.nr-feedback.no{color:var(--red)}
+.nr-stats{display:flex;gap:24px;font-size:.7rem;color:var(--muted);justify-content:center;font-family:'JetBrains Mono',monospace}
+.nr-stat-val{color:var(--accent2);font-weight:700}
+.nr-controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
+.nr-mode-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.nr-mode-btn{font-family:'JetBrains Mono',monospace;font-size:.64rem;text-transform:uppercase;letter-spacing:.08em;padding:5px 13px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:var(--surface2);color:var(--muted);transition:all .2s;font-weight:500}
+.nr-mode-btn:hover{border-color:var(--accent);color:var(--accent)}
+.nr-mode-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.nr-mode-btn[style*='red'].active{background:var(--red);border-color:var(--red)}
+.nr-streak{font-family:'Instrument Serif',serif;font-size:1.5rem;color:var(--gold)}
+.nr-keyboard-hint{width:100%;max-width:520px;border-radius:var(--radius-sm);overflow:hidden}
+
+/* Key sig buttons */
+.nr-keysig-btn{font-family:'JetBrains Mono',monospace;font-size:.62rem;padding:4px 10px;
+  border-radius:4px;border:1px solid var(--border);cursor:pointer;background:var(--surface2);
+  color:var(--muted);transition:all .2s;white-space:nowrap}
+.nr-keysig-btn:hover{border-color:var(--accent);color:var(--accent)}
+.nr-keysig-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ── QUINTENZIRKEL ── */
+.qz-layout{display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:20px;flex:1;min-height:0;align-items:start}
+@media(max-width:700px){.qz-layout{grid-template-columns:1fr}}
+.qz-circle-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.qz-svg{width:100%;max-width:400px;cursor:pointer;user-select:none}
+.qz-legend{display:flex;align-items:center;gap:5px;font-size:.65rem;color:var(--muted);
+  font-family:'JetBrains Mono',monospace;flex-wrap:wrap;justify-content:center}
+.qz-leg-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.qz-info{display:flex;flex-direction:column;gap:14px;overflow-y:auto}
+.qz-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:40px;color:var(--muted);font-size:.82rem;text-align:center;min-height:200px}
+
+/* Info cards */
+.qz-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+.qz-card-title{font-size:.62rem;font-family:'JetBrains Mono',monospace;text-transform:uppercase;
+  letter-spacing:.12em;color:var(--muted);margin-bottom:10px;font-weight:600}
+.qz-key-name{font-family:'Instrument Serif',serif;font-size:2rem;color:var(--accent2);line-height:1}
+.qz-key-sub{font-size:.75rem;color:var(--muted);margin-top:4px}
+.qz-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.qz-badge{font-family:'JetBrains Mono',monospace;font-size:.65rem;padding:3px 10px;
+  border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--muted)}
+.qz-badge.sharp{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+.qz-badge.flat{border-color:#7ab0d4;color:#5090b0;background:rgba(122,176,212,.1)}
+.qz-badge.key{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);font-weight:600}
+
+/* Scale display */
+.qz-scale{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.qz-note{display:flex;flex-direction:column;align-items:center;gap:2px}
+.qz-note-name{font-family:'Instrument Serif',serif;font-size:1rem;color:var(--text);
+  background:var(--surface2);border:1px solid var(--border);border-radius:5px;
+  padding:5px 8px;min-width:32px;text-align:center;transition:all .2s}
+.qz-note-name.acc{color:var(--gold);border-color:var(--gold);background:var(--gold-dim)}
+.qz-note-name.tonic{background:var(--accent);color:#fff;border-color:var(--accent)}
+.qz-note-deg{font-size:.55rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.qz-step{font-size:.65rem;color:var(--muted);align-self:center;padding-bottom:14px;
+  font-family:'JetBrains Mono',monospace}
+
+/* Degree chords */
+.qz-chords{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.qz-chord-tile{border-radius:6px;padding:8px 4px;text-align:center;cursor:pointer;
+  border:1px solid var(--border);transition:all .2s;background:var(--surface2)}
+.qz-chord-tile:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+.qz-chord-tile .deg{font-size:.6rem;font-family:'JetBrains Mono',monospace;
+  color:var(--muted);margin-bottom:3px}
+.qz-chord-tile .cname{font-family:'Instrument Serif',serif;font-size:.9rem}
+.qz-chord-tile.major{border-color:var(--accent);background:var(--accent-dim)}
+.qz-chord-tile.major .cname{color:var(--accent2)}
+.qz-chord-tile.minor{border-color:var(--green);background:rgba(82,201,122,.08)}
+.qz-chord-tile.minor .cname{color:var(--green)}
+.qz-chord-tile.dim{border-color:var(--red);background:rgba(245,108,108,.08)}
+.qz-chord-tile.dim .cname{color:var(--red)}
+
+/* Fingering */
+.qz-fingering{display:flex;gap:16px;flex-wrap:wrap}
+.qz-hand{flex:1;min-width:120px}
+.qz-hand-label{font-size:.62rem;font-family:'JetBrains Mono',monospace;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+.qz-fingers{display:flex;gap:3px;flex-wrap:wrap}
+.qz-finger{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:.7rem;font-weight:700;font-family:'JetBrains Mono',monospace;
+  border:2px solid var(--border);background:var(--surface2);color:var(--muted)}
+.qz-finger.f1{background:var(--accent);color:#fff;border-color:var(--accent)}
+.qz-finger.f2{background:#52c97a;color:#fff;border-color:#52c97a}
+.qz-finger.f3{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+.qz-finger.f4{background:#b07040;color:#fff;border-color:#b07040}
+.qz-finger.f5{background:#8048d0;color:#fff;border-color:#8048d0}
+.qz-finger-note{font-size:.55rem;color:var(--muted);text-align:center;
+  font-family:'JetBrains Mono',monospace;margin-top:2px}
+
+/* Staff in qz */
+.qz-staff-svg{width:100%;max-height:100px}
+
+/* Lang toggle flags */
+.lang-btn{background:none;border:none;cursor:pointer;font-size:1.4rem;line-height:1;
+  padding:2px 4px;border-radius:4px;transition:transform .2s;opacity:.6}
+.lang-btn:hover{transform:scale(1.15);opacity:1}
+.lang-btn.active{opacity:1;transform:scale(1.1)}
+[lang=en] .de,[lang=de] .en{display:none!important}
+/* Sheet search */
+.sheet-search-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sheet-search-bar input{flex:1;min-width:200px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Klavier<span>trainer</span></div>
+  <div class="header-right">
+    <button class="lang-btn" id="lang-de" onclick="setLang('de')" title="Deutsch">🇦🇹</button>
+    <button class="lang-btn active" id="lang-en" onclick="setLang('en')" title="English">🇬🇧</button>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀ Hell</button>
+    <div class="midi-status">
+      <div class="midi-dot" id="midi-dot"></div>
+      <span id="midi-label-de" class="de">MIDI nicht verbunden</span>
+      <span id="midi-label-en" class="en">MIDI not connected</span>
+    </div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="showPage('library',this)">
+    <span class="de">Akkorde</span><span class="en">Chords</span>
+  </button>
+  <button class="tab" onclick="showPage('detect',this)">
+    <span class="de">Erkennung</span><span class="en">Detect</span>
+  </button>
+  <button class="tab" onclick="showPage('practice',this)">
+    <span class="de">Üben</span><span class="en">Practice</span>
+  </button>
+  <button class="tab" onclick="showPage('sheets',this)">
+    <span class="de">Noten suchen</span><span class="en">Find Sheet Music</span>
+  </button>
+  <button class="tab" onclick="showPage('notenlesen',this)">
+    <span class="de">Notenlesen</span><span class="en">Read Notes</span>
+  </button>
+  <button class="tab" onclick="showPage('quinten',this)">
+    <span class="de">Quintenzirkel</span><span class="en">Circle of 5ths</span>
+  </button>
+</div>
+
+<!-- ═══ AKKORD BIBLIOTHEK ═══ -->
+<div class="page active" id="page-library">
+  <div class="keyboard-wrap">
+    <div class="keyboard" id="keyboard-lib"></div>
+    <div class="notes-display" id="notes-lib-display"></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <span style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">
+      <span class="de">Umkehrung:</span><span class="en">Inversion:</span>
+    </span>
+    <div class="inv-tabs" id="inv-tabs"></div>
+  </div>
+  <div class="chord-info" id="chord-info" style="display:none">
+    <div><div class="ci-name" id="ci-name">—</div><div class="ci-sub" id="ci-sub"></div></div>
+    <div><div class="ci-notes" id="ci-notes"></div><div class="ci-formula" id="ci-formula"></div></div>
+    <div style="font-size:1.8rem;color:var(--muted);opacity:.25">𝄞</div>
+  </div>
+  <div class="lib-layout">
+    <div class="root-col" id="root-col"></div>
+    <div class="lib-right">
+      <div class="cat-bar" id="cat-bar"></div>
+      <div class="lib-grid" id="lib-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ERKENNUNG ═══ -->
+<div class="page" id="page-detect">
+  <div class="section-title">
+    <span class="de">Akkord-Erkennung</span><span class="en">Chord Detection</span>
+  </div>
+  <p style="font-size:.7rem;color:var(--muted);line-height:1.6">
+    <span class="de">Klicke Tasten an (oder spiele auf dem MIDI-Keyboard) — mögliche Akkorde erscheinen unten.</span>
+    <span class="en">Click keys (or play on MIDI keyboard) — possible chords appear below.</span>
+  </p>
+  <div style="display:flex;align-items:center;gap:8px;font-size:.7rem;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius-sm);padding:9px 13px;color:var(--muted)">
+    <span style="font-size:1.1rem">🎹</span>
+    <span class="de">Ohne MIDI-Keyboard: Tasten oben anklicken. <b style="color:var(--text)">Mit MIDI-Keyboard (USB):</b> Akkorde direkt spielen — werden live erkannt.</span>
+    <span class="en">Without MIDI keyboard: click keys above. <b style="color:var(--text)">With MIDI keyboard (USB):</b> play chords directly — detected in real time.</span>
+  </div>
+  <div class="keyboard-wrap">
+    <div class="keyboard" id="keyboard-det"></div>
+    <div class="notes-display" id="notes-det-display"></div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <button class="btn sm danger" onclick="clearDetect()">
+      <span class="de">Alles löschen</span><span class="en">Clear all</span>
+    </button>
+    <span id="det-note-count" style="font-size:.68rem;color:var(--muted)"></span>
+  </div>
+  <div class="detect-panel">
+    <div style="font-size:.64rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">
+      <span class="de">Erkannte Akkorde</span><span class="en">Detected Chords</span>
+    </div>
+    <div class="detect-results" id="detect-results">
+      <div class="detect-hint">
+        <span class="de">Wähle 2 oder mehr Töne</span><span class="en">Select 2 or more notes</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ÜBEN ═══ -->
+<div class="page" id="page-practice">
+  <div class="keyboard-wrap">
+    <div class="keyboard" id="keyboard-prac"></div>
+    <div class="notes-display" id="notes-prac-display"></div>
+  </div>
+  <div class="chord-panel-2">
+    <div class="card">
+      <div class="card-label">
+        <span class="de">Spiele diesen Akkord</span><span class="en">Play this chord</span>
+      </div>
+      <div class="card-value" id="target-chord-name">—</div>
+      <div class="card-sub" id="target-chord-notes">
+        <span class="de">Starte um zu beginnen</span><span class="en">Start to begin</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label">
+        <span class="de">Du spielst — Interpretationen</span><span class="en">You play — Interpretations</span>
+      </div>
+      <div id="played-matches-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:5px;margin-top:4px"></div>
+    </div>
+  </div>
+  <div class="feedback" id="practice-feedback"></div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:100%"></div></div>
+  <div style="display:flex;align-items:center;gap:8px;font-size:.7rem;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:var(--radius-sm);padding:9px 13px;color:var(--muted)">
+    <span style="font-size:1.1rem">🎹</span>
+    <span class="de"><b style="color:var(--text)">MIDI-Keyboard (USB) erforderlich.</b> Das Keyboard wird automatisch erkannt — MIDI-Status oben rechts im Header.</span>
+    <span class="en"><b style="color:var(--text)">MIDI keyboard (USB) required.</b> Keyboard is detected automatically — MIDI status shown top right in header.</span>
+  </div>
+  <div class="practice-controls">
+    <button class="btn primary" onclick="startPractice()">
+      <span class="de">Starten</span><span class="en">Start</span>
+    </button>
+    <button class="btn danger" onclick="stopPractice()">Stop</button>
+    <div class="timer-display" id="timer-display">—</div>
+    <select id="time-per-chord">
+      <option value="3">3 s</option><option value="5" selected>5 s</option>
+      <option value="8">8 s</option><option value="12">12 s</option>
+    </select>
+    <select id="difficulty">
+      <option value="easy" data-de="Leicht (Dur)" data-en="Easy (Major)">Leicht (Dur)</option>
+      <option value="medium" selected data-de="Mittel (Dur+Moll)" data-en="Medium (Maj+Min)">Mittel (Dur+Moll)</option>
+      <option value="hard" data-de="Schwer (alle)" data-en="Hard (all)">Schwer (alle)</option>
+    </select>
+    <label style="display:flex;align-items:center;gap:6px;font-size:.68rem;color:var(--muted);cursor:pointer;user-select:none">
+      <input type="checkbox" id="prac-inversions" style="accent-color:var(--gold);width:14px;height:14px">
+      <span class="de">Umkehrungen üben</span><span class="en">Practice inversions</span>
+    </label>
+  </div>
+  <div id="prac-inv-info" style="display:none;font-size:.65rem;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:7px 12px">
+    <span class="de">Umkehrung aktiv:</span><span class="en">Inversion active:</span>
+    <span id="prac-inv-label" style="color:var(--gold)"></span>
+  </div>
+  <div class="score-row">
+    <span><span class="de">Richtig:</span><span class="en">Correct:</span> <span class="score-val" id="score-correct">0</span></span>
+    <span><span class="de">Falsch:</span><span class="en">Wrong:</span> <span class="score-val" id="score-wrong">0</span></span>
+    <span>Serie: <span class="score-val" id="score-streak">0</span></span>
+  </div>
+</div>
+
+<!-- ═══ NOTEN SUCHEN ═══ -->
+<div class="page" id="page-sheets">
+  <div class="section-title">
+    <span class="de">Noten suchen</span><span class="en">Find Sheet Music</span>
+  </div>
+  <p style="font-size:.7rem;color:var(--muted);line-height:1.7">
+    <span class="de">Suche öffnet Google mit <code style="background:var(--surface2);padding:1px 5px;border-radius:3px">site:imslp.org</code> — dort das passende Werk anklicken und PDF herunterladen.</span>
+    <span class="en">Search opens Google with <code style="background:var(--surface2);padding:1px 5px;border-radius:3px">site:imslp.org</code> — click the result and download the PDF there.</span>
+  </p>
+  <div class="sheet-search-bar">
+    <input type="text" id="sheet-query"
+      class="de" placeholder="z.B. Für Elise · Nocturne Op.9 · Mondscheinsonate …"
+      onkeydown="if(event.key==='Enter')sheetSearch()">
+    <input type="text" id="sheet-query-en"
+      class="en" placeholder="e.g. Für Elise · Nocturne Op.9 · Moonlight Sonata …"
+      onkeydown="if(event.key==='Enter')sheetSearch()">
+    <button class="btn primary" onclick="sheetSearch()">
+      <span class="de">Auf IMSLP suchen →</span><span class="en">Search IMSLP →</span>
+    </button>
+  </div>
+  <div id="sheet-results"></div>
+  <div style="margin-top:8px;font-size:.68rem;color:var(--muted)">
+    <span class="de">🎓 Tipp: IMSLP enthält über 250.000 gemeinfreie Noten kostenlos zum Download.</span>
+    <span class="en">🎓 Tip: IMSLP has over 250,000 public domain scores available for free download.</span>
+  </div>
+</div>
+
+<!-- ═══ NOTENLESEN ═══ -->
+<div class="page" id="page-notenlesen">
+  <div class="section-title">
+    <span class="de">Noten lesen lernen</span><span class="en">Learn to Read Notes</span>
+  </div>
+  <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+    <div class="nr-mode-row">
+      <button class="nr-mode-btn active" onclick="setNRClef('treble',this)">
+        <span class="de">Violinschlüssel</span><span class="en">Treble clef</span>
+      </button>
+      <button class="nr-mode-btn" onclick="setNRClef('bass',this)">
+        <span class="de">Bassschlüssel</span><span class="en">Bass clef</span>
+      </button>
+      <button class="nr-mode-btn" onclick="setNRClef('both',this)">
+        <span class="de">Beide</span><span class="en">Both</span>
+      </button>
+    </div>
+    <div class="nr-mode-row">
+      <button class="nr-mode-btn active" onclick="setNRDiff('easy',this)">
+        <span class="de">Leicht — nur Stammtöne</span><span class="en">Easy — natural notes only</span>
+      </button>
+      <button class="nr-mode-btn" onclick="setNRDiff('medium',this)">
+        <span class="de">Mittel — mit Vorzeichen</span><span class="en">Medium — with accidentals</span>
+      </button>
+      <button class="nr-mode-btn" onclick="setNRDiff('hard',this)">
+        <span class="de">Schwer — Generalvorzeichen</span><span class="en">Hard — key signatures</span>
+      </button>
+      <button class="nr-mode-btn" onclick="setNRDiff('super',this)" style="color:var(--red)">
+        <span class="de">💀 Super — beides</span><span class="en">💀 Super — both</span>
+      </button>
+    </div>
+  </div>
+  <!-- Key signature selector (Hard only) -->
+  <div id="nr-keysig-row" style="display:none;flex-wrap:wrap;gap:6px;align-items:center;
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px">
+    <span style="font-size:.62rem;color:var(--muted);font-family:JetBrains Mono,monospace;
+      text-transform:uppercase;letter-spacing:.1em;margin-right:4px">
+      <span class="de">Tonart:</span><span class="en">Key:</span>
+    </span>
+    <div id="nr-keysig-btns" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+  </div>
+  <div class="note-staff-wrap">
+    <svg class="staff-svg" id="staff-svg" viewBox="0 0 500 160" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="nr-options" id="nr-options"></div>
+    <div class="nr-feedback" id="nr-feedback">
+      <span class="de">Welche Note ist das?</span><span class="en">Which note is this?</span>
+    </div>
+    <div class="nr-stats">
+      <span><span class="de">Richtig:</span><span class="en">Correct:</span> <span class="nr-stat-val" id="nr-correct">0</span></span>
+      <span><span class="de">Falsch:</span><span class="en">Wrong:</span> <span class="nr-stat-val" id="nr-wrong">0</span></span>
+      <span>Serie: <span class="nr-streak" id="nr-streak">0</span></span>
+    </div>
+    <div class="nr-controls">
+      <button class="btn primary" onclick="nextNRQuestion()">
+        <span class="de">Nächste Note →</span><span class="en">Next note →</span>
+      </button>
+      <button class="btn sm" onclick="resetNRStats()">
+        <span class="de">Zurücksetzen</span><span class="en">Reset</span>
+      </button>
+    </div>
+    <svg class="nr-keyboard-hint" id="nr-kbd-hint" viewBox="0 0 520 70" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div style="font-size:.6rem;color:var(--muted)">
+      <span class="de">Klaviaturposition der gesuchten Note</span>
+      <span class="en">Keyboard position of the note</span>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ════════════════════════════════════════════════════════
+// CHORD DATABASE
+// ════════════════════════════════════════════════════════
+const N=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const CHORD_DEFS=[
+  {sym:'',      name:'Major',           ivs:[0,4,7],          cats:['maj'],           formula:'1–3–5'},
+  {sym:'maj6',  name:'Major 6th',       ivs:[0,4,7,9],        cats:['maj','add'],     formula:'1–3–5–6'},
+  {sym:'maj7',  name:'Major 7th',       ivs:[0,4,7,11],       cats:['maj','7'],       formula:'1–3–5–7'},
+  {sym:'maj9',  name:'Major 9th',       ivs:[0,4,7,11,14],    cats:['maj','9'],       formula:'1–3–5–7–9'},
+  {sym:'maj11', name:'Major 11th',      ivs:[0,4,7,11,14,17], cats:['maj','11'],      formula:'1–3–5–7–9–11'},
+  {sym:'maj13', name:'Major 13th',      ivs:[0,4,7,11,14,21], cats:['maj','13'],      formula:'1–3–5–7–9–13'},
+  {sym:'6/9',   name:'Six Nine',        ivs:[0,4,7,9,14],     cats:['maj','add','9'], formula:'1–3–5–6–9'},
+  {sym:'add9',  name:'Add 9',           ivs:[0,4,7,14],       cats:['maj','add','9'], formula:'1–3–5–9'},
+  {sym:'add11', name:'Add 11',          ivs:[0,4,7,17],       cats:['maj','add','11'],formula:'1–3–5–11'},
+  {sym:'maj7#11',name:'Lydian',         ivs:[0,4,7,11,18],    cats:['maj','7','11'],  formula:'1–3–5–7–#11'},
+  {sym:'m',     name:'Minor',           ivs:[0,3,7],          cats:['min'],           formula:'1–b3–5'},
+  {sym:'m6',    name:'Minor 6th',       ivs:[0,3,7,9],        cats:['min','add'],     formula:'1–b3–5–6'},
+  {sym:'m7',    name:'Minor 7th',       ivs:[0,3,7,10],       cats:['min','7'],       formula:'1–b3–5–b7'},
+  {sym:'mM7',   name:'Minor Major 7th', ivs:[0,3,7,11],       cats:['min','7'],       formula:'1–b3–5–7'},
+  {sym:'m9',    name:'Minor 9th',       ivs:[0,3,7,10,14],    cats:['min','9'],       formula:'1–b3–5–b7–9'},
+  {sym:'m11',   name:'Minor 11th',      ivs:[0,3,7,10,14,17], cats:['min','11'],      formula:'1–b3–5–b7–9–11'},
+  {sym:'m13',   name:'Minor 13th',      ivs:[0,3,7,10,14,21], cats:['min','13'],      formula:'1–b3–5–b7–9–13'},
+  {sym:'madd9', name:'Minor Add 9',     ivs:[0,3,7,14],       cats:['min','add','9'], formula:'1–b3–5–9'},
+  {sym:'7',     name:'Dominant 7th',    ivs:[0,4,7,10],       cats:['7'],             formula:'1–3–5–b7'},
+  {sym:'9',     name:'Dominant 9th',    ivs:[0,4,7,10,14],    cats:['7','9'],         formula:'1–3–5–b7–9'},
+  {sym:'11',    name:'Dominant 11th',   ivs:[0,4,7,10,14,17], cats:['7','11'],        formula:'1–3–5–b7–9–11'},
+  {sym:'13',    name:'Dominant 13th',   ivs:[0,4,7,10,14,21], cats:['7','13'],        formula:'1–3–5–b7–9–13'},
+  {sym:'7b5',   name:'7 Flat 5',        ivs:[0,4,6,10],       cats:['7','dim'],       formula:'1–3–b5–b7'},
+  {sym:'7#5',   name:'7 Sharp 5',       ivs:[0,4,8,10],       cats:['7','aug'],       formula:'1–3–#5–b7'},
+  {sym:'7b9',   name:'7 Flat 9',        ivs:[0,4,7,10,13],    cats:['7','9'],         formula:'1–3–5–b7–b9'},
+  {sym:'7#9',   name:'7 Sharp 9',       ivs:[0,4,7,10,15],    cats:['7','9'],         formula:'1–3–5–b7–#9'},
+  {sym:'7#11',  name:'Lydian Dominant', ivs:[0,4,7,10,18],    cats:['7','11'],        formula:'1–3–5–b7–#11'},
+  {sym:'dim',   name:'Diminished',      ivs:[0,3,6],          cats:['dim'],           formula:'1–b3–b5'},
+  {sym:'dim7',  name:'Diminished 7th',  ivs:[0,3,6,9],        cats:['dim','7'],       formula:'1–b3–b5–bb7'},
+  {sym:'m7b5',  name:'Half Diminished', ivs:[0,3,6,10],       cats:['dim','7','min'], formula:'1–b3–b5–b7'},
+  {sym:'aug',   name:'Augmented',       ivs:[0,4,8],          cats:['aug'],           formula:'1–3–#5'},
+  {sym:'aug7',  name:'Augmented 7th',   ivs:[0,4,8,10],       cats:['aug','7'],       formula:'1–3–#5–b7'},
+  {sym:'augM7', name:'Augmented Maj 7', ivs:[0,4,8,11],       cats:['aug','7'],       formula:'1–3–#5–7'},
+  {sym:'sus2',  name:'Suspended 2nd',   ivs:[0,2,7],          cats:['sus'],           formula:'1–2–5'},
+  {sym:'sus4',  name:'Suspended 4th',   ivs:[0,5,7],          cats:['sus'],           formula:'1–4–5'},
+  {sym:'7sus2', name:'7sus2',           ivs:[0,2,7,10],       cats:['sus','7'],       formula:'1–2–5–b7'},
+  {sym:'7sus4', name:'7sus4',           ivs:[0,5,7,10],       cats:['sus','7'],       formula:'1–4–5–b7'},
+  {sym:'9sus4', name:'9sus4',           ivs:[0,5,7,10,14],    cats:['sus','7','9'],   formula:'1–4–5–b7–9'},
+];
+const CATS=[
+  {id:'maj',label:'Maj'},{id:'min',label:'Min'},{id:'dim',label:'Dim'},
+  {id:'aug',label:'Aug'},{id:'7',label:'7th'},{id:'9',label:'9th'},
+  {id:'11',label:'11th'},{id:'13',label:'13th'},{id:'sus',label:'Sus'},{id:'add',label:'Add'},
+];
+const ALL_ROOTS=['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+const CHORD_DB=[];
+for(const root of ALL_ROOTS){
+  for(const def of CHORD_DEFS){
+    const mroot=root.replace('Eb','D#').replace('Ab','G#').replace('Bb','A#');
+    const ri=N.indexOf(mroot);
+    const midiBase=def.ivs.map(i=>60+ri+i);
+    CHORD_DB.push({root,sym:def.sym,name:def.name,
+      displayName:root+(def.sym?' '+def.sym:''),
+      fullSym:root+def.sym,
+      ivs:def.ivs,cats:def.cats,formula:def.formula,
+      midiBase,noteNames:midiBase.map(m=>N[m%12])});
+  }
+}
+function getInversion(midi,inv){
+  if(!inv)return [...midi];
+  const n=[...midi];
+  for(let i=0;i<inv;i++){const lo=n.shift();n.push(lo+12);}
+  // Shift entire chord so lowest note lands in keyboard range 48-83
+  const lo=Math.min(...n);
+  let shift=0;
+  if(lo<48) shift=Math.ceil((48-lo)/12)*12;
+  else if(lo>71) shift=-Math.floor((lo-48)/12)*12;
+  return n.map(m=>m+shift);
+}
+function invName(i){return['Grundlage','1. Umkehrung','2. Umkehrung','3. Umkehrung'][i]||i+'. Umk.';}
+
+// ════════════════════════════════════════════════════════
+// KEYBOARD BUILDER
+// ════════════════════════════════════════════════════════
+// KEYBOARD BUILDER
+// ════════════════════════════════════════════════════════
+const WPC=[0,2,4,5,7,9,11];
+function buildKeyboard(id,s=48,e=83,clickCb=null){
+  const c=document.getElementById(id);c.innerHTML='';c.style.position='relative';
+  const W=40,whites=[];
+  for(let m=s;m<=e;m++)if(WPC.includes(m%12))whites.push(m);
+  whites.forEach(m=>{
+    const k=document.createElement('div');k.className='key-white';k.dataset.midi=m;
+    if(m%12===0){const l=document.createElement('div');l.className='key-label';l.textContent='C'+(Math.floor(m/12)-1);k.appendChild(l);}
+    if(clickCb)k.addEventListener('mousedown',e=>{e.preventDefault();clickCb(m);});
+    c.appendChild(k);
+  });
+  for(let m=s;m<=e;m++)if(!WPC.includes(m%12)){
+    const k=document.createElement('div');k.className='key-black';k.dataset.midi=m;
+    k.style.left=(whites.filter(w=>w<m).length*W-12)+'px';
+    if(clickCb)k.addEventListener('mousedown',e=>{e.preventDefault();clickCb(m);});
+    c.appendChild(k);
+  }
+  c.style.width=(whites.length*W)+'px';
+}
+function hlKeys(id,groups){
+  const c=document.getElementById(id);
+  c.querySelectorAll('.key-white,.key-black').forEach(k=>{
+    k.classList.remove('active','inv1','inv2','inv3','detect');
+  });
+  for(const g of groups)
+    g.midis.forEach(m=>{
+      // Try exact match first, then adjacent octaves as fallback
+      const exact=c.querySelector(`[data-midi="${m}"]`);
+      if(exact){exact.classList.add(g.cls);return;}
+      for(let o=-2;o<=2;o++){if(o===0)continue;const k=c.querySelector(`[data-midi="${m+o*12}"]`);if(k){k.classList.add(g.cls);break;}}
+    });
+}
+function fk(id,m){return document.querySelector(`#${id} [data-midi="${m}"]`);}
+
+// ════════════════════════════════════════════════════════
+// MIDI
+
+// ════════════════════════════════════════════════════════
+// MIDI
+// ════════════════════════════════════════════════════════
+let midiAccess=null;const midiPressed=new Set();let onNotes=null;
+async function initMIDI(){
+  if(!navigator.requestMIDIAccess){setMS('error','Web MIDI nicht unterstützt');return;}
+  try{midiAccess=await navigator.requestMIDIAccess();updMidi();midiAccess.onstatechange=updMidi;}
+  catch{setMS('error','MIDI Zugriff verweigert');}
+}
+function updMidi(){
+  const inp=[...midiAccess.inputs.values()];
+  if(!inp.length){setMS('','Kein MIDI-Gerät');return;}
+  inp.forEach(i=>i.onmidimessage=handleMIDI);
+  setMS('connected',inp.map(i=>i.name).join(', '));
+}
+function handleMIDI({data:[s,n,v]}){
+  const cmd=s&0xf0;
+  if(cmd===0x90&&v>0)midiPressed.add(n);
+  else if(cmd===0x80||(cmd===0x90&&v===0))midiPressed.delete(n);
+  if(onNotes)onNotes([...midiPressed]);
+}
+function setMS(cls,txt){
+  document.getElementById('midi-dot').className='midi-dot '+cls;
+  document.getElementById('midi-label').textContent=txt;
+}
+
+// ════════════════════════════════════════════════════════
+// CHORD RECOGNITION UTIL
+// ════════════════════════════════════════════════════════
+// CHORD RECOGNITION UTIL
+// ════════════════════════════════════════════════════════
+function matchChords(midis){
+  // Returns ALL interpretations of the played notes:
+  // 1. EXACT: played PCs == chord PCs  (e.g. D#/F#/A# = Ebm)
+  // 2. ROOTLESS: played PCs ⊂ chord PCs, exactly 1 note missing
+  //    (e.g. D#/F#/A# ⊂ Bmaj7 = Bmaj7 without root B)
+  // This means 3 notes can legitimately be C, Am6, Em7(no root), etc.
+  if(midis.length<2)return[];
+  const played=new Set(midis.map(n=>((n%12)+12)%12));
+  const pcsArr=[...played].sort((a,b)=>a-b);
+  const COMMON=['','m','7','maj7','m7','dim','aug','sus2','sus4','dim7','m7b5',
+    'maj6','m6','mM7','9','m9','aug7','7sus4','7sus2','add9','madd9'];
+  const seen=new Set();
+  const results=[];
+  for(const ch of CHORD_DB){
+    const cp=new Set(ch.midiBase.map(n=>((n%12)+12)%12));
+    const cpArr=[...cp].sort((a,b)=>a-b);
+    const key=ch.root+ch.sym;
+    if(seen.has(key))continue;
+    // EXACT match
+    if(cp.size===played.size&&cpArr.every((v,i)=>v===pcsArr[i])){
+      seen.add(key);
+      const ci=COMMON.indexOf(ch.sym);
+      results.push({ch,score:ci>=0?200-ci:150,type:'exact',missing:[]});
+      continue;
+    }
+    // ROOTLESS: played is strict subset of chord, exactly 1 note missing
+    if(cp.size===played.size+1&&pcsArr.every(p=>cp.has(p))){
+      seen.add(key);
+      const missing=[...cp].filter(p=>!played.has(p));
+      const ci=COMMON.indexOf(ch.sym);
+      // Score lower than exact, but common chords rank higher
+      results.push({ch,score:ci>=0?100-ci:50,type:'rootless',missing});
+    }
+  }
+  return results.sort((a,b)=>b.score-a.score);
+}
+function idChordExact(midis){
+  return matchChords(midis)[0]?.ch||null;
+}
+
+// ════════════════════════════════════════════════════════
+// LIBRARY STATE
+// ════════════════════════════════════════════════════════
+// LIBRARY STATE
+// ════════════════════════════════════════════════════════
+let libRoot='C',libCats=[],libChord=null,libInv=0;
+function buildLibNav(){
+  const col=document.getElementById('root-col');
+  ALL_ROOTS.forEach(r=>{
+    const btn=document.createElement('button');
+    btn.className='root-btn'+(r==='C'?' active':'');btn.textContent=r;
+    btn.onclick=()=>{
+      libRoot=r;libInv=0;
+      document.querySelectorAll('.root-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');renderLibGrid();
+      if(libChord&&libChord.root!==r){libChord=null;updateChordInfo();}
+    };
+    col.appendChild(btn);
+  });
+  const bar=document.getElementById('cat-bar');
+  const allBtn=document.createElement('button');
+  allBtn.className='cat-btn active';allBtn.textContent='Alle';
+  allBtn.onclick=()=>{libCats=[];document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));allBtn.classList.add('active');renderLibGrid();};
+  bar.appendChild(allBtn);
+  CATS.forEach(cat=>{
+    const btn=document.createElement('button');btn.className='cat-btn';btn.textContent=cat.label;
+    btn.onclick=()=>{
+      if(libCats.includes(cat.id)){libCats=libCats.filter(c=>c!==cat.id);btn.classList.remove('active');}
+      else{libCats.push(cat.id);btn.classList.add('active');allBtn.classList.remove('active');}
+      if(!libCats.length)allBtn.classList.add('active');renderLibGrid();
+    };
+    bar.appendChild(btn);
+  });
+}
+function renderLibGrid(){
+  const grid=document.getElementById('lib-grid');
+  let chords=CHORD_DB.filter(ch=>ch.root===libRoot);
+  if(libCats.length)chords=chords.filter(ch=>libCats.some(c=>ch.cats.includes(c)));
+  grid.innerHTML='';
+  if(!chords.length){grid.innerHTML='<div class="empty-state" style="grid-column:1/-1">Keine Akkorde</div>';return;}
+  chords.forEach(ch=>{
+    const d=document.createElement('div');d.className='lib-card'+(libChord===ch?' selected':'');
+    const col=CATS.find(c=>ch.cats.includes(c.id))?.id;
+    const catColors={maj:'var(--gold)',min:'#6c8ef5',dim:'#f56c6c',aug:'#f5a83c','7':'#52c97a','9':'#b87cf5','11':'#4cccd0','13':'#f5e04c',sus:'#5ab0f0',add:'#f56cb8'};
+    const clr=catColors[col]||'var(--gold)';
+    const clef=bestClefForMidi(ch.midiBase);
+    const staffSvg=drawMiniStaffSVG(ch.midiBase, clef);
+    d.innerHTML=`<div class="lc-name" style="color:${clr}">${ch.displayName}</div><div class="lc-type">${ch.name}</div>${staffSvg}<div class="lc-formula" style="margin-top:3px;font-family:'JetBrains Mono',monospace">${ch.formula}</div>`;
+    d.onclick=()=>selectLibChord(ch,d);grid.appendChild(d);
+  });
+}
+function selectLibChord(ch,card){
+  document.querySelectorAll('.lib-card').forEach(c=>c.classList.remove('selected'));
+  card.classList.add('selected');libChord=ch;libInv=0;
+  updateChordInfo();renderInvTabs();showInversion(0);
+}
+function updateChordInfo(){
+  const info=document.getElementById('chord-info');
+  if(!libChord){info.style.display='none';return;}
+  info.style.display='grid';
+  document.getElementById('ci-name').textContent=libChord.displayName;
+  document.getElementById('ci-sub').textContent=libChord.name;
+  document.getElementById('ci-notes').textContent=libChord.noteNames.join('  ·  ');
+  document.getElementById('ci-formula').textContent=libChord.formula;
+}
+function renderInvTabs(){
+  const tabs=document.getElementById('inv-tabs');tabs.innerHTML='';
+  if(!libChord)return;
+  const max=Math.min(libChord.midiBase.length-1,3);
+  for(let i=0;i<=max;i++){
+    const btn=document.createElement('button');
+    btn.className=`inv-btn i${i}`+(i===0?' active':'');btn.textContent=invName(i);
+    const ii=i;
+    btn.onclick=()=>{
+      libInv=ii;document.querySelectorAll('.inv-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');showInversion(ii);
+    };
+    tabs.appendChild(btn);
+  }
+}
+function showInversion(inv){
+  if(!libChord)return;libInv=inv;
+  const midi=getInversion(libChord.midiBase,inv);
+  const cls=['active','inv1','inv2','inv3'][inv]||'active';
+  hlKeys('keyboard-lib',[{midis:midi,cls}]);
+  const notesEl=document.getElementById('notes-lib-display');
+  notesEl.innerHTML=midi.map(m=>`<div class="note-pill active">${N[m%12]}</div>`).join('');
+  if(inv>0)document.getElementById('ci-notes').textContent=libChord.noteNames.join('  ·  ')+'  (Bass: '+N[midi[0]%12]+')';
+  else document.getElementById('ci-notes').textContent=libChord.noteNames.join('  ·  ');
+}
+
+// ════════════════════════════════════════════════════════
+// CHORD DETECT PAGE
+// ════════════════════════════════════════════════════════
+// CHORD DETECT PAGE  (clickable keyboard)
+// ════════════════════════════════════════════════════════
+let detSelected=new Set(),detClickSelected=new Set(),detMidiActive=false;
+function onDetKeyClick(midi){
+  // Toggle note on/off (mouse/touch – tracked separately from MIDI)
+  if(detClickSelected.has(midi)){
+    detClickSelected.delete(midi);
+    detSelected.delete(midi);
+  } else {
+    detClickSelected.add(midi);
+    detSelected.add(midi);
+  }
+  renderDetect();
+}
+function clearDetect(){detSelected.clear();detClickSelected.clear();detMidiActive=false;renderDetect();}
+function renderDetect(){
+  const notes=[...detSelected];
+  // Keyboard highlight
+  hlKeys('keyboard-det',[{midis:notes,cls:'detect'}]);
+  // Note pills
+  const sortedPCs=[...new Set(notes.map(m=>((m%12)+12)%12))].sort((a,b)=>a-b);
+  document.getElementById('notes-det-display').innerHTML=
+    sortedPCs.map(pc=>`<div class="note-pill active">${N[pc]}</div>`).join('');
+  document.getElementById('det-note-count').textContent=sortedPCs.length+' Töne ausgewählt';
+  // Match
+  const res=matchChords(notes);
+  const el=document.getElementById('detect-results');
+  if(!sortedPCs.length){el.innerHTML='<div class="detect-hint">Wähle 2 oder mehr Töne</div>';return;}
+  if(sortedPCs.length===1){el.innerHTML='<div class="detect-hint">Noch mehr Töne wählen</div>';return;}
+  if(!res.length){el.innerHTML='<div class="detect-hint">Kein bekannter Akkord erkannt</div>';return;}
+  const exact=res.filter(r=>r.type==='exact');
+  const rootless=res.filter(r=>r.type==='rootless');
+  let html='';
+  if(exact.length){
+    html+=`<div class="detect-section-label">Exakt (${exact.length})</div>`;
+    html+=exact.map((r,i)=>{
+      const clef=bestClefForMidi(r.ch.midiBase);
+      const staffSvg=drawMiniStaffSVG(r.ch.midiBase,clef);
+      return`<div class="detect-match ${i===0?'top':''}" onclick="showDetMatch('${r.ch.root}','${r.ch.sym}')">
+        <div class="dm-name">${r.ch.displayName}</div>
+        <div class="dm-type">${r.ch.name}</div>
+        ${staffSvg}
+      </div>`;
+    }).join('');
+  }
+  if(rootless.length){
+    html+=`<div class="detect-section-label rootless">Rootlos — +Bass (${rootless.length})</div>`;
+    html+=rootless.slice(0,12).map(r=>{
+      const miss=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][r.missing[0]];
+      const clef=bestClefForMidi(r.ch.midiBase);
+      const staffSvg=drawMiniStaffSVG(r.ch.midiBase,clef);
+      return`<div class="detect-match rootless" onclick="showDetMatch('${r.ch.root}','${r.ch.sym}')">
+        <div class="dm-name">${r.ch.displayName}</div>
+        <div class="dm-type">+${miss} als Bass</div>
+        ${staffSvg}
+      </div>`;
+    }).join('');
+  }
+  el.innerHTML=html;
+}
+function showDetMatch(root,sym){
+  // Navigate to library tab with this chord highlighted
+  const ch=CHORD_DB.find(c=>c.root===root&&c.sym===sym);if(!ch)return;
+  // Switch to library tab
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-library').classList.add('active');
+  document.querySelector('.tab').classList.add('active');
+  // Select root
+  libRoot=root;libInv=0;
+  document.querySelectorAll('.root-btn').forEach(b=>{b.classList.toggle('active',b.textContent===root);});
+  libCats=[];document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.cat-btn').classList.add('active');
+  renderLibGrid();
+  // Find and click the card
+  setTimeout(()=>{
+    const cards=[...document.querySelectorAll('.lib-card')];
+    const card=cards.find(c=>c.querySelector('.lc-name')?.textContent===ch.displayName);
+    if(card){card.scrollIntoView({behavior:'smooth',block:'nearest'});selectLibChord(ch,card);}
+  },50);
+}
+
+// ════════════════════════════════════════════════════════
+// PRACTICE
+// ════════════════════════════════════════════════════════
+// PRACTICE
+// ════════════════════════════════════════════════════════
+const PRAC_DEFS=[
+  {sym:'',cats:['easy','medium','hard']},{sym:'m',cats:['medium','hard']},
+  {sym:'7',cats:['hard']},{sym:'maj7',cats:['hard']},{sym:'m7',cats:['hard']},
+  {sym:'dim',cats:['hard']},{sym:'sus2',cats:['hard']},{sym:'sus4',cats:['hard']},
+];
+const PRAC_ROOTS=['C','D','E','F','G','A','B'];
+let pActive=false,pTimer=null,pChord=null,tLeft=0,sC=0,sW=0,sStr=0,pWaiting=false,pCurrentInv=0;
+function getPracChords(){
+  const diff=document.getElementById('difficulty').value;
+  const syms=PRAC_DEFS.filter(d=>d.cats.includes(diff)).map(d=>d.sym);
+  return CHORD_DB.filter(ch=>PRAC_ROOTS.includes(ch.root)&&syms.includes(ch.sym));
+}
+function startPractice(){pActive=true;sC=sW=sStr=0;updSc();nextChord();}
+function stopPractice(){
+  pActive=false;clearInterval(pTimer);
+  document.getElementById('target-chord-name').textContent='—';
+  document.getElementById('target-chord-notes').textContent='Starte um zu beginnen';
+  document.getElementById('timer-display').textContent='—';
+  document.getElementById('progress-fill').style.width='100%';
+  setFb('','');hlKeys('keyboard-prac',[]);pChord=null;
+}
+function nextChord(){
+  if(!pActive)return;
+  pWaiting=false;
+  clearInterval(pTimer);pTimer=null;
+  const pool=getPracChords();
+  let next;
+  do { next=pool[Math.floor(Math.random()*pool.length)]; }
+  while(pool.length>1 && next===pChord);
+  pChord=next;
+  // Inversions mode: pick a random inversion
+  const useInv=document.getElementById('prac-inversions').checked;
+  const maxInv=Math.min(pChord.midiBase.length-1,3);
+  pCurrentInv=useInv?Math.floor(Math.random()*(maxInv+1)):0;
+  const invMidi=getInversion(pChord.midiBase,pCurrentInv);
+  const invLabel=invName(pCurrentInv);
+  // Display
+  const invSuffix=pCurrentInv>0?' ('+invLabel+')':'';
+  document.getElementById('target-chord-name').textContent=pChord.displayName+invSuffix;
+  document.getElementById('target-chord-notes').textContent=invMidi.map(m=>N[m%12]).join(' – ')+' (Bass: '+N[invMidi[0]%12]+')';
+  document.getElementById('prac-inv-info').style.display=pCurrentInv>0?'block':'none';
+  document.getElementById('prac-inv-label').textContent=invLabel;
+  setFb(t('Spiele den angezeigten Akkord …','Play the displayed chord …'),'');
+  hlKeys('keyboard-prac',[{midis:invMidi,cls:['active','inv1','inv2','inv3'][pCurrentInv]||'active'}]);
+  const tot=parseInt(document.getElementById('time-per-chord').value);
+  tLeft=tot;document.getElementById('progress-fill').style.width='100%';
+  document.getElementById('timer-display').textContent=tLeft+'s';
+  pTimer=setInterval(()=>{
+    if(!pActive){clearInterval(pTimer);return;}
+    tLeft--;document.getElementById('timer-display').textContent=tLeft+'s';
+    document.getElementById('progress-fill').style.width=(tLeft/tot*100)+'%';
+    if(tLeft<=0){
+      clearInterval(pTimer);pTimer=null;
+      if(!pWaiting){pWaiting=true;sW++;sStr=0;updSc();setFb(t('Zeit abgelaufen!',"Time's up!"),'wrong');setTimeout(nextChord,1500);}
+    }
+  },1000);
+}
+function setFb(msg,cls){const el=document.getElementById('practice-feedback');el.textContent=msg;el.className='feedback '+cls;}
+function updSc(){
+  document.getElementById('score-correct').textContent=sC;
+  document.getElementById('score-wrong').textContent=sW;
+  document.getElementById('score-streak').textContent=sStr;
+}
+
+// ════════════════════════════════════════════════════════
+// MIDI NOTE HANDLER
+// ════════════════════════════════════════════════════════
+// MIDI NOTE HANDLER (routes to active page)
+// ════════════════════════════════════════════════════════
+onNotes=function(notes){
+  const active=document.querySelector('.page.active')?.id;
+  if(active==='page-library'&&libChord){
+    const target=getInversion(libChord.midiBase,libInv);
+    const cls=['active','inv1','inv2','inv3'][libInv]||'active';
+    hlKeys('keyboard-lib',[{midis:target,cls}]);
+  }
+  if(active==='page-detect'){
+    // MIDI input: replace detSelected with currently held notes (live, not toggle)
+    // Only update if there are notes being held – releasing all clears nothing
+    // so user can still use click-toggle when not playing
+    if(notes.length>0){
+      // Replace midi-sourced notes but keep click-sourced ones
+      // Simple approach: if any MIDI note is held, show exactly those
+      detMidiActive=true;
+      detSelected=new Set(notes);
+    } else if(detMidiActive){
+      // All keys released – clear MIDI notes but keep any clicked ones
+      detMidiActive=false;
+      detSelected=new Set(detClickSelected);
+    }
+    renderDetect();
+  }
+  if(active==='page-practice'&&pActive){
+    document.getElementById('keyboard-prac').querySelectorAll('.key-white,.key-black').forEach(k=>k.classList.remove('active','detect'));
+    notes.forEach(m=>{const k=fk('keyboard-prac',m);if(k)k.classList.add('active');});
+    // Show ALL interpretations of played notes
+    const playedPCs=[...new Set(notes.map(n=>((n%12)+12)%12))].sort((a,b)=>a-b);
+    const targetPCs=[...new Set(pChord.midiBase.map(n=>((n%12)+12)%12))].sort((a,b)=>a-b);
+    const grid=document.getElementById('played-matches-grid');
+    if(notes.length===0){
+      grid.innerHTML='<div style="font-size:.65rem;color:var(--muted);grid-column:1/-1">—</div>';
+    } else {
+      const allMatches=matchChords(notes);
+      if(allMatches.length){
+        // Check which matches contain the target chord
+        const targetKey=pChord.root+pChord.sym;
+        grid.innerHTML=allMatches.slice(0,12).map(r=>{
+          const isHit=(r.ch.root+r.ch.sym)===targetKey;
+          const miss=r.type==='rootless'?['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][r.missing[0]]:'';
+          return`<div class="detect-match${isHit?' hit':''}" style="cursor:default">
+            <div class="dm-name">${r.ch.displayName}</div>
+            <div class="dm-type">${r.type==='rootless'?'+'+miss+' Bass':r.ch.name.split(' ')[0]}</div>
+          </div>`;
+        }).join('');
+      } else {
+        grid.innerHTML=`<div style="font-size:.65rem;color:var(--muted);grid-column:1/-1">${notes.map(m=>N[((m%12)+12)%12]).join(' ')} — unbekannt</div>`;
+      }
+    }
+    // Accept: target chord is among the interpretations of what was played.
+    // In inversion mode, also check bass note matches.
+    const useInv=document.getElementById('prac-inversions').checked;
+    const invMidi=getInversion(pChord.midiBase,pCurrentInv);
+    const expectedBassPC=((invMidi[0]%12)+12)%12;
+    const lowestPlayedPC=notes.length?((Math.min(...notes)%12)+12)%12:-1;
+    const bassOk=!useInv||(pCurrentInv===0)||lowestPlayedPC===expectedBassPC;
+    const targetKey=pChord.root+pChord.sym;
+    const allM=notes.length?matchChords(notes):[];
+    const targetAmongMatches=allM.some(r=>(r.ch.root+r.ch.sym)===targetKey);
+    if(!pWaiting&&pChord&&notes.length>=2&&targetAmongMatches&&bassOk){
+      pWaiting=true;
+      clearInterval(pTimer);pTimer=null;
+      sC++;sStr++;updSc();setFb(t('✓ Richtig!','✓ Correct!'),'correct');
+      setTimeout(nextChord,1200);
+    }
+  }
+};
+
+// ════════════════════════════════════════════════════════
+// PDF VIEWER
+// ════════════════════════════════════════════════════════
+// NOTE READING TRAINER
+// ════════════════════════════════════════════════════════
+// Staff positions: treble clef, notes on/between lines
+// Lines (bottom to top): E4, G4, B4, D5, F5
+// Spaces (bottom to top): F4, A4, C5, E5
+// Ledger lines: C4 (middle C), A5, G3...
+
+// Base note definitions – acc:null = natural (no accidental)
+const TREBLE_NOTES=[
+  {name:'C',oct:4,sp:0,ledger:true, acc:null},
+  {name:'D',oct:4,sp:1,ledger:false,acc:null},
+  {name:'E',oct:4,sp:2,ledger:false,acc:null},
+  {name:'F',oct:4,sp:3,ledger:false,acc:null},
+  {name:'G',oct:4,sp:4,ledger:false,acc:null},
+  {name:'A',oct:4,sp:5,ledger:false,acc:null},
+  {name:'B',oct:4,sp:6,ledger:false,acc:null},
+  {name:'C',oct:5,sp:7,ledger:false,acc:null},
+  {name:'D',oct:5,sp:8,ledger:false,acc:null},
+  {name:'E',oct:5,sp:9,ledger:false,acc:null},
+  {name:'F',oct:5,sp:10,ledger:false,acc:null},
+  {name:'G',oct:5,sp:11,ledger:false,acc:null},
+  {name:'A',oct:5,sp:12,ledger:true, acc:null},
+];
+const BASS_NOTES=[
+  {name:'E',oct:2,sp:0,ledger:false,acc:null},
+  {name:'F',oct:2,sp:1,ledger:false,acc:null},
+  {name:'G',oct:2,sp:2,ledger:false,acc:null},
+  {name:'A',oct:2,sp:3,ledger:false,acc:null},
+  {name:'B',oct:2,sp:4,ledger:false,acc:null},
+  {name:'C',oct:3,sp:5,ledger:false,acc:null},
+  {name:'D',oct:3,sp:6,ledger:false,acc:null},
+  {name:'E',oct:3,sp:7,ledger:false,acc:null},
+  {name:'F',oct:3,sp:8,ledger:false,acc:null},
+  {name:'G',oct:3,sp:9,ledger:false,acc:null},
+  {name:'A',oct:3,sp:10,ledger:false,acc:null},
+  {name:'B',oct:3,sp:11,ledger:false,acc:null},
+  {name:'C',oct:4,sp:12,ledger:true, acc:null},
+];
+
+// Key signatures: sharps and flats (note names affected)
+// Each entry: {id, label_de, label_en, sharps:[], flats:[]}
+const KEY_SIGS = [
+  {id:'C',  label_de:'C-Dur / a-Moll',   label_en:'C major / A minor',    sharps:[],                          flats:[]},
+  {id:'G',  label_de:'G-Dur / e-Moll',   label_en:'G major / E minor',    sharps:['F'],                       flats:[]},
+  {id:'D',  label_de:'D-Dur / h-Moll',   label_en:'D major / B minor',    sharps:['F','C'],                   flats:[]},
+  {id:'A',  label_de:'A-Dur / fis-Moll', label_en:'A major / F# minor',   sharps:['F','C','G'],               flats:[]},
+  {id:'E',  label_de:'E-Dur / cis-Moll', label_en:'E major / C# minor',   sharps:['F','C','G','D'],           flats:[]},
+  {id:'B',  label_de:'H-Dur / gis-Moll', label_en:'B major / G# minor',   sharps:['F','C','G','D','A'],       flats:[]},
+  {id:'F',  label_de:'F-Dur / d-Moll',   label_en:'F major / D minor',    sharps:[],                          flats:['B']},
+  {id:'Bb', label_de:'B-Dur / g-Moll',   label_en:'Bb major / G minor',   sharps:[],                          flats:['B','E']},
+  {id:'Eb', label_de:'Es-Dur / c-Moll',  label_en:'Eb major / C minor',   sharps:[],                          flats:['B','E','A']},
+  {id:'Ab', label_de:'As-Dur / f-Moll',  label_en:'Ab major / F minor',   sharps:[],                          flats:['B','E','A','D']},
+];
+
+// Sharp positions on treble staff (sp values) for key sig display
+// Order of sharps: F C G D A E B
+const SHARP_SP_TREBLE = [10,7,11,8,5,9,6]; // F5,C5,G5,D5,A4,E5,B4
+const FLAT_SP_TREBLE  = [6,9,5,8,4,7,3];   // B4,E5,A4,D5,G4,C5,F4
+const SHARP_SP_BASS   = [8,5,9,6,3,7,4];   // F3,C3,G3,D3,A2,E3,B2  
+const FLAT_SP_BASS    = [4,7,3,6,2,5,1];   // B2,E3,A2,D3,G2,C3,F2
+
+let currentKeySig = KEY_SIGS[0]; // default: C major
+
+let nrClef='treble',nrDiff='easy',nrCurrent=null,nrAnswered=false;
+let nrCorrect=0,nrWrong=0,nrStreak=0;
+// For medium: the current note may have an accidental applied
+// For hard: currentKeySig already defined above
+let nrCurrentAcc = null; // null | '#' | 'b'
+
+function setNRClef(c,btn){nrClef=c;
+  btn.closest('.nr-mode-row').querySelectorAll('.nr-mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');nextNRQuestion();}
+function setNRDiff(d,btn){nrDiff=d;
+  btn.closest('.nr-mode-row').querySelectorAll('.nr-mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // Show/hide key sig selector
+  document.getElementById('nr-keysig-row').style.display = (d==='hard'||d==='super') ? 'flex' : 'none';
+  nextNRQuestion();}
+
+function setNRKeySig(id){
+  currentKeySig = KEY_SIGS.find(k=>k.id===id)||KEY_SIGS[0];
+  // Update button labels
+  document.querySelectorAll('.nr-keysig-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.id===id);
+  });
+  nextNRQuestion();
+}
+
+function getNRPool(){
+  let pool=nrClef==='treble'?[...TREBLE_NOTES]:nrClef==='bass'?[...BASS_NOTES]:[...TREBLE_NOTES,...BASS_NOTES];
+  if(nrDiff==='easy') pool=pool.filter(n=>n.sp>=2&&n.sp<=10&&!n.ledger);
+  else if(nrDiff==='medium') pool=pool.filter(n=>n.sp>=1&&n.sp<=11);
+  // hard: use all notes (ledger lines included based on difficulty setting)
+  return pool;
+}
+
+// Build the note to quiz from pool, applying accidentals based on difficulty
+function buildNRNote(baseNote){
+  const n = {...baseNote, acc: null};
+  if(nrDiff==='medium'){
+    // Random: natural, sharp, or flat – but not if it creates double accidental
+    // ~40% chance of accidental
+    const r = Math.random();
+    if(r < 0.3) n.acc = '#';
+    else if(r < 0.6) n.acc = 'b';
+    // else natural
+  } else if(nrDiff==='hard'){
+    // Key signature only: acc comes from key sig
+    if(currentKeySig.sharps.includes(n.name)) n.acc = '#';
+    else if(currentKeySig.flats.includes(n.name)) n.acc = 'b';
+  } else if(nrDiff==='super'){
+    // Key signature + random extra accidental on top
+    // First apply key sig
+    let keySigAcc = null;
+    if(currentKeySig.sharps.includes(n.name)) keySigAcc = '#';
+    else if(currentKeySig.flats.includes(n.name)) keySigAcc = 'b';
+    // Then randomly override with explicit accidental (~50% chance)
+    const r = Math.random();
+    if(r < 0.25) n.acc = '#';
+    else if(r < 0.5) n.acc = 'b';
+    else n.acc = keySigAcc; // use key sig acc (or null)
+    // Mark that there's an explicit accidental to display (overrides key sig)
+    n.explicitAcc = (r < 0.5) ? n.acc : null;
+  }
+  // Build display label
+  const accStr = n.acc==='#' ? '♯' : n.acc==='b' ? '♭' : '';
+  // German: B→H
+  const noteDe = n.name==='B' ? 'H' : n.name;
+  n.label_de = noteDe + accStr + n.oct;
+  n.label_en = n.name + accStr + n.oct;
+  return n;
+}
+
+function nextNRQuestion(){
+  nrAnswered=false;
+  const fb=document.getElementById('nr-feedback');
+  fb.innerHTML='<span class="de">Welche Note ist das?</span><span class="en">Which note is this?</span>';
+  fb.className='nr-feedback';
+  const pool=getNRPool();
+  const base=pool[Math.floor(Math.random()*pool.length)];
+  nrCurrent=buildNRNote(base);
+  drawStaff(nrCurrent);
+  renderNROptions(nrCurrent);
+  drawKbdHint(nrCurrent);
+}
+
+function drawStaff(note){
+  const svg=document.getElementById('staff-svg');
+  const dark=document.documentElement.classList.contains('light');
+  const lineColor=dark?'#5a6480':'#3a4260';
+  const noteColor=dark?'#4a6ef0':'#6c8ef5';
+  const accColor=dark?'#c47c10':'#e8b84b';
+  const keySigColor=dark?'#7a82a0':'#5a6480';
+  const textColor=dark?'#7a82a0':'#5a6480';
+  const bg=dark?'#ffffff':'#151820';
+  const W=500,H=160,mx=50;
+  const lineY0=55,LS=14;
+
+  function spToY(sp){
+    const bottomLineY=lineY0+4*LS;
+    return bottomLineY-(sp-2)*(LS/2);
+  }
+
+  const actualClef=nrClef==='both'?(note.oct>=4?'treble':'bass'):nrClef;
+  const noteY=spToY(note.sp);
+  // Key sig width: count accidentals to draw
+  const keySigCount = (nrDiff==='hard'||nrDiff==='super') ?
+    (currentKeySig.sharps.length + currentKeySig.flats.length) : 0;
+  const clefW = actualClef==='treble' ? 34 : 22;
+  const keySigW = keySigCount * 11;
+  const noteX = mx + clefW + keySigW + 40;
+
+  let html=`<rect width="${W}" height="${H}" fill="${bg}" rx="8"/>`;
+
+  // Staff lines
+  for(let i=0;i<5;i++){
+    const y=lineY0+i*LS;
+    html+=`<line x1="${mx}" y1="${y}" x2="${W-mx}" y2="${y}" stroke="${lineColor}" stroke-width="1.5"/>`;
+  }
+
+  // Clef
+  if(actualClef==='treble'){
+    html+=`<text x="${mx+6}" y="${lineY0+4*LS+8}" font-size="62" font-family="serif" fill="${lineColor}" opacity=".8">𝄞</text>`;
+  } else {
+    html+=`<text x="${mx+6}" y="${lineY0+2*LS+4}" font-size="38" font-family="serif" fill="${lineColor}" opacity=".8">𝄢</text>`;
+  }
+
+  // Key signature (Hard mode)
+  if((nrDiff==='hard'||nrDiff==='super') && keySigCount>0){
+    const spArr = currentKeySig.sharps.length>0 ?
+      (actualClef==='treble'?SHARP_SP_TREBLE:SHARP_SP_BASS) :
+      (actualClef==='treble'?FLAT_SP_TREBLE:FLAT_SP_BASS);
+    const sym = currentKeySig.sharps.length>0 ? '♯' : '♭';
+    const count = currentKeySig.sharps.length || currentKeySig.flats.length;
+    const startX = mx + clefW + 4;
+    for(let i=0;i<count;i++){
+      const ky = spToY(spArr[i]);
+      html+=`<text x="${startX+i*11}" y="${ky+5}" font-size="14" font-family="serif"
+        fill="${keySigColor}" font-weight="bold">${sym}</text>`;
+    }
+  }
+
+  // Ledger lines
+  const bottomLineY=lineY0+4*LS, topLineY=lineY0;
+  if(noteY>bottomLineY+LS/2){
+    for(let y=bottomLineY+LS;y<=noteY+2;y+=LS)
+      html+=`<line x1="${noteX-16}" y1="${y}" x2="${noteX+16}" y2="${y}" stroke="${lineColor}" stroke-width="1.5"/>`;
+  }
+  if(noteY<topLineY-LS/2){
+    for(let y=topLineY-LS;y>=noteY-2;y-=LS)
+      html+=`<line x1="${noteX-16}" y1="${y}" x2="${noteX+16}" y2="${y}" stroke="${lineColor}" stroke-width="1.5"/>`;
+  }
+
+  // Accidental before note (Medium + Super: show explicit acc on note)
+  if(note.acc && (nrDiff==='medium' || (nrDiff==='super' && note.explicitAcc))){
+    const accSym = note.acc==='#' ? '♯' : '♭';
+    html+=`<text x="${noteX-18}" y="${noteY+5}" font-size="16" font-family="serif"
+      fill="${accColor}" font-weight="bold">${accSym}</text>`;
+  }
+
+  // Note head
+  html+=`<ellipse cx="${noteX}" cy="${noteY}" rx="11" ry="8"
+    fill="${noteColor}" transform="rotate(-15,${noteX},${noteY})"/>`;
+  // Stem
+  const stemUp = note.sp < 6;
+  if(stemUp){
+    html+=`<line x1="${noteX+10}" y1="${noteY}" x2="${noteX+10}" y2="${noteY-45}" stroke="${noteColor}" stroke-width="2"/>`;
+  } else {
+    html+=`<line x1="${noteX-10}" y1="${noteY}" x2="${noteX-10}" y2="${noteY+45}" stroke="${noteColor}" stroke-width="2"/>`;
+  }
+
+  // Clef label
+  const clefLabel = actualClef==='treble' ?
+    (currentLang==='de'?'Violinschlüssel':'Treble clef') :
+    (currentLang==='de'?'Bassschlüssel':'Bass clef');
+  // Key sig label for hard
+  let keySigLabel='';
+  if(nrDiff==='hard'||nrDiff==='super'){
+    keySigLabel = ' · ' + (currentLang==='de'?currentKeySig.label_de:currentKeySig.label_en);
+  }
+  html+=`<text x="${W/2}" y="${H-8}" text-anchor="middle"
+    font-family="JetBrains Mono,monospace" font-size="10"
+    fill="${textColor}">${clefLabel}${keySigLabel}</text>`;
+
+  svg.innerHTML=html;
+}
+
+function renderNROptions(note){
+  // Generate 4 options: correct + 3 distractors from same pool
+  const pool=getNRPool();
+  const opts=new Set([note.label]);
+  const others=pool.filter(n=>n.label!==note.label);
+  // Shuffle others
+  for(let i=others.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[others[i],others[j]]=[others[j],others[i]];}
+  others.slice(0,3).forEach(n=>opts.add(n.label));
+  // Shuffle opts
+  const optArr=[...opts].sort(()=>Math.random()-.5);
+  const container=document.getElementById('nr-options');
+  container.innerHTML=optArr.map(label=>{
+    // Display: use German H for B
+    const display=label.split('(')[0].trim().replace(/B(\d)/,'H$1');
+    const safe=label.replace(/'/g,"\\'");
+    return`<button class="nr-opt" onclick="checkNRAnswer('${safe}','${note.label.replace(/'/g,"\\'")}')">${display}</button>`;
+  }).join('');
+}
+
+function checkNRAnswer(chosen,correct){
+  if(nrAnswered)return;
+  nrAnswered=true;
+  const fb=document.getElementById('nr-feedback');
+  const opts=document.querySelectorAll('.nr-opt');
+  opts.forEach(btn=>{
+    const label=btn.textContent;
+    // match by display name back to label
+    const pool=getNRPool();
+    if(chosen===correct){
+      if(btn.onclick.toString().includes(chosen))btn.classList.add('correct');
+    } else {
+      if(btn.onclick.toString().includes(chosen))btn.classList.add('wrong');
+      if(btn.onclick.toString().includes(correct))btn.classList.add('correct');
+    }
+  });
+  // Simpler: re-render with classes
+  renderNROptionsResult(correct,chosen);
+  if(chosen===correct){
+    nrCorrect++;nrStreak++;
+    fb.textContent='✓ Richtig! '+correct;fb.className='nr-feedback ok';
+  } else {
+    nrWrong++;nrStreak=0;
+    fb.textContent='✗ Falsch. Es war: '+correct;fb.className='nr-feedback no';
+  }
+  document.getElementById('nr-correct').textContent=nrCorrect;
+  document.getElementById('nr-wrong').textContent=nrWrong;
+  document.getElementById('nr-streak').textContent=nrStreak;
+}
+
+function renderNROptionsResult(correct,chosen){
+  const container=document.getElementById('nr-options');
+  const btns=container.querySelectorAll('.nr-opt');
+  btns.forEach(btn=>{
+    const onc=btn.getAttribute('onclick')||'';
+    if(onc.includes(correct.replace(/'/g,"\\'"))){btn.classList.add('correct');}
+    if(onc.includes(chosen.replace(/'/g,"\\'"))&&chosen!==correct){btn.classList.add('wrong');}
+  });
+}
+
+function resetNRStats(){
+  nrCorrect=0;nrWrong=0;nrStreak=0;nrCurrent=null;
+  document.getElementById('nr-correct').textContent=0;
+  document.getElementById('nr-wrong').textContent=0;
+  document.getElementById('nr-streak').textContent=0;
+  nextNRQuestion();
+}
+
+function drawKbdHint(note){
+  // Draw a small 2-octave keyboard highlighting the note
+  const svg=document.getElementById('nr-kbd-hint');
+  const dark=document.documentElement.classList.contains('light');
+  const bg=dark?'#f0f2f8':'#0d0f14';
+  const wKey=dark?'#fafbff':'#e8ecf5';
+  const bKey=dark?'#1a1f35':'#0d0f14';
+  const brd=dark?'#c4c8de':'#252a38';
+  const hlColor=dark?'#4a6ef0':'#6c8ef5';
+  const W=520,H=70,start=48,end=71; // C4..B5 (2 octaves)
+
+  const noteToMidi={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+  const targetMidi=12*(note.oct+1)+noteToMidi[note.name];
+
+  const whites=[];
+  for(let m=start;m<=end;m++)if(WPC.includes(m%12))whites.push(m);
+  const Ww=Math.floor(W/whites.length);
+
+  let html=`<rect width="${W}" height="${H}" fill="${bg}" rx="4"/>`;
+
+  // white keys
+  whites.forEach((m,i)=>{
+    const isTarget=(m===targetMidi);
+    const fill=isTarget?hlColor:wKey;
+    html+=`<rect x="${i*Ww+1}" y="1" width="${Ww-2}" height="${H-2}" rx="3" fill="${fill}" stroke="${brd}" stroke-width="1"/>`;
+  });
+  // black keys
+  for(let m=start;m<=end;m++){
+    if(!WPC.includes(m%12)){
+      const before=whites.filter(w=>w<m).length;
+      const isTarget=(m===targetMidi);
+      const fill=isTarget?hlColor:bKey;
+      const bW=Ww*0.6,bH=H*0.6;
+      const x=before*Ww-bW/2;
+      html+=`<rect x="${x}" y="1" width="${bW}" height="${bH}" rx="2" fill="${fill}" stroke="${brd}" stroke-width="0.5"/>`;
+    }
+  }
+
+  svg.innerHTML=html;
+}
+
+// ════════════════════════════════════════════════════════
+// MINI STAFF SVG  (for chord tiles)
+// ════════════════════════════════════════════════════════
+// MINI STAFF SVG  (for chord tiles)
+// ════════════════════════════════════════════════════════
+// Maps a MIDI note to staff position relative to treble/bass bottom line
+// Returns {sp, clef, ledger} where sp = diatonic steps from bottom line (E4 / G2)
+const MIDI_TO_TREBLE_SP = {
+  // MIDI 60=C4 ... 81=A5
+  60:0,62:1,64:2,65:3,67:4,69:5,71:6,72:7,74:8,76:9,77:10,79:11,81:12
+};
+const MIDI_TO_BASS_SP = {
+  // MIDI 40=E2 ... 60=C4
+  40:0,41:1,43:2,45:3,47:4,48:5,50:6,52:7,53:8,55:9,57:10,59:11,60:12
+};
+
+function midiToStaffInfo(midi, clef){
+  // Find the canonical octave-4 position then adjust
+  const pc = midi % 12;
+  // Diatonic pitch classes: C=0,D=2,E=4,F=5,G=7,A=9,B=11
+  const DIA = [0,2,4,5,7,9,11];
+  const diaIdx = DIA.indexOf(pc); // -1 if sharp/flat – snap to nearest white
+  if(diaIdx < 0) return null; // skip accidentals for staff display
+
+  if(clef === 'treble'){
+    // E4(midi64)=sp2, each diatonic step=1 sp, octave=7sp
+    const base = 64; // E4
+    const baseSp = 2;
+    // How many diatonic steps from E4?
+    const diaSteps = diaStepsFromE4(midi);
+    if(diaSteps === null) return null;
+    const sp = baseSp + diaSteps;
+    return {sp, ledger: sp<=0 || sp>=12};
+  } else {
+    // G2(midi43)=sp2
+    const diaSteps = diaStepsFromG2(midi);
+    if(diaSteps === null) return null;
+    const sp = 2 + diaSteps;
+    return {sp, ledger: sp<=0 || sp>=12};
+  }
+}
+
+function diaStepsFromE4(midi){
+  // Count diatonic steps from E4 (midi 64)
+  const DIA = [0,2,4,5,7,9,11]; // C D E F G A B
+  const E4_DIA_IDX = 2; // E is index 2 in DIA
+  const pc = midi % 12;
+  const oct = Math.floor(midi / 12) - 1; // octave number (C4=oct4)
+  const diaIdx = DIA.indexOf(pc);
+  if(diaIdx < 0) return null;
+  // Diatonic index in absolute terms
+  const absE4 = 4*7 + E4_DIA_IDX; // octave4 * 7 steps + E position
+  const absNote = oct*7 + diaIdx;
+  return absNote - absE4;
+}
+
+function diaStepsFromG2(midi){
+  const DIA = [0,2,4,5,7,9,11];
+  const G2_DIA_IDX = 4; // G is index 4
+  const pc = midi % 12;
+  const oct = Math.floor(midi / 12) - 1;
+  const diaIdx = DIA.indexOf(pc);
+  if(diaIdx < 0) return null;
+  const absG2 = 2*7 + G2_DIA_IDX;
+  const absNote = oct*7 + diaIdx;
+  return absNote - absG2;
+}
+
+function drawMiniStaffSVG(midiNotes, clef){
+  // Returns an SVG string showing a mini 5-line staff with the given notes
+  // clef: 'treble' or 'bass'
+  const light = document.documentElement.classList.contains('light');
+  const lineC = light ? '#7a82a0' : '#3a4260';
+  const noteC = light ? '#4a6ef0' : '#6c8ef5';
+  const bgC = 'transparent';
+  const W = 130, H = 52;
+  const mx = 18; // left margin for clef
+  const LS = 7;  // line spacing (pixels between staff lines)
+  const lineY0 = 10; // top staff line y
+
+  // spToY: sp=2 is bottom line
+  function spToY(sp){
+    const bottomY = lineY0 + 4*LS;
+    return bottomY - (sp - 2) * (LS/2);
+  }
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="lc-staff">`;
+  svg += `<rect width="${W}" height="${H}" fill="${bgC}"/>`;
+
+  // 5 staff lines
+  for(let i=0; i<5; i++){
+    const y = lineY0 + i*LS;
+    svg += `<line x1="${mx}" y1="${y}" x2="${W-4}" y2="${y}" stroke="${lineC}" stroke-width="1"/>`;
+  }
+
+  // Clef symbol (small)
+  if(clef === 'treble'){
+    svg += `<text x="${mx-14}" y="${lineY0+4*LS+3}" font-size="30" font-family="serif" fill="${lineC}">𝄞</text>`;
+  } else {
+    svg += `<text x="${mx-14}" y="${lineY0+2*LS+2}" font-size="18" font-family="serif" fill="${lineC}">𝄢</text>`;
+  }
+
+  // Notes – spread them horizontally
+  const validInfos = [];
+  for(const midi of midiNotes){
+    const info = midiToStaffInfo(midi, clef);
+    if(info) validInfos.push({midi, info});
+  }
+
+  if(!validInfos.length){
+    svg += `<text x="${W/2}" y="${H/2+4}" text-anchor="middle" font-size="7" font-family="JetBrains Mono,monospace" fill="${lineC}">—</text>`;
+    svg += '</svg>';
+    return svg;
+  }
+
+  const spacing = Math.min(22, (W - mx - 18) / (validInfos.length));
+  const startX = mx + 14;
+
+  validInfos.forEach(({midi, info}, i) => {
+    const x = startX + i * spacing;
+    const y = spToY(info.sp);
+
+    // Ledger lines
+    const bottomY = lineY0 + 4*LS;
+    const topY = lineY0;
+    if(y > bottomY + LS/2){
+      for(let ly = bottomY + LS; ly <= y + 1; ly += LS)
+        svg += `<line x1="${x-7}" y1="${ly}" x2="${x+7}" y2="${ly}" stroke="${lineC}" stroke-width="1"/>`;
+    }
+    if(y < topY - LS/2){
+      for(let ly = topY - LS; ly >= y - 1; ly -= LS)
+        svg += `<line x1="${x-7}" y1="${ly}" x2="${x+7}" y2="${ly}" stroke="${lineC}" stroke-width="1"/>`;
+    }
+
+    // Note head
+    svg += `<ellipse cx="${x}" cy="${y}" rx="5" ry="3.5" fill="${noteC}" transform="rotate(-12,${x},${y})"/>`;
+    // Stem (upward for lower notes, downward for higher)
+    const stemUp = info.sp < 6;
+    if(stemUp){
+      svg += `<line x1="${x+4.5}" y1="${y}" x2="${x+4.5}" y2="${y-18}" stroke="${noteC}" stroke-width="1.2"/>`;
+    } else {
+      svg += `<line x1="${x-4.5}" y1="${y}" x2="${x-4.5}" y2="${y+18}" stroke="${noteC}" stroke-width="1.2"/>`;
+    }
+  });
+
+  svg += '</svg>';
+  return svg;
+}
+
+// Choose best clef for a set of MIDI notes
+function bestClefForMidi(midiNotes){
+  const avg = midiNotes.reduce((a,b)=>a+b,0) / midiNotes.length;
+  return avg >= 55 ? 'treble' : 'bass'; // approx G3 boundary
+}
+
+// ════════════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════════════
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function toast(msg){
+  let t=document.getElementById('_toast');
+  if(!t){t=document.createElement('div');t.id='_toast';
+    Object.assign(t.style,{position:'fixed',bottom:'20px',left:'50%',transform:'translateX(-50%)',
+      background:'var(--gold)',color:'var(--bg)',padding:'7px 18px',borderRadius:'20px',
+      fontFamily:'JetBrains Mono,monospace',fontSize:'.7rem',letterSpacing:'.08em',zIndex:'9999',
+      transition:'opacity .3s',pointerEvents:'none',whiteSpace:'nowrap'});
+    document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';
+  clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity='0',2200);
+}
+let dark=false;
+function toggleTheme(){
+  dark=!dark;document.documentElement.classList.toggle('light',!dark);
+  document.getElementById('theme-btn').textContent=dark?'☀ Hell':'☾ Dunkel';
+  if(nrCurrent)drawStaff(nrCurrent);
+  if(nrCurrent)drawKbdHint(nrCurrent);
+  // Redraw mini staffs in visible page
+  renderLibGrid();
+  if(document.getElementById('page-detect').classList.contains('active')) renderDetect();
+}
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='favorites')renderFavs();
+  if(id==='notenlesen'&&!nrCurrent)nextNRQuestion();
+}
+
+// ════════════════════════════════════════════════════════
+// INIT
+
+// ════════════════════════════════════════════════════════
+// SHEET SEARCH (Google → IMSLP, no server needed)
+// ════════════════════════════════════════════════════════
+function sheetSearch(){
+  const qDe = document.getElementById('sheet-query').value.trim();
+  const qEn = document.getElementById('sheet-query-en').value.trim();
+  const q = currentLang==='de' ? qDe : qEn;
+  if(!q) return;
+  const url = 'https://www.google.com/search?q=site%3Aimslp.org+' + encodeURIComponent(q);
+  window.open(url, '_blank');
+}
+
+// ════════════════════════════════════════════════════════
+// LANGUAGE
+// ════════════════════════════════════════════════════════
+let currentLang = 'de';
+
+const INV_NAMES = {
+  de: ['Grundlage','1. Umkehrung','2. Umkehrung','3. Umkehrung'],
+  en: ['Root position','1st inversion','2nd inversion','3rd inversion']
+};
+// Override invName from lib_state to be lang-aware
+function invName(i){
+  return (INV_NAMES[currentLang]||INV_NAMES.de)[i] || (i+'. Umk.');
+}
+
+function t(de, en){ return currentLang==='de' ? de : en; }
+
+function setLang(lang){
+  currentLang = lang;
+  document.getElementById('html-root').setAttribute('lang', lang);
+  document.getElementById('lang-de').classList.toggle('active', lang==='de');
+  document.getElementById('lang-en').classList.toggle('active', lang==='en');
+  document.getElementById('page-title').textContent = lang==='de' ? 'Klaviertrainer' : 'Piano Trainer';
+  // Update difficulty select options
+  document.querySelectorAll('#difficulty option').forEach(o=>{
+    o.textContent = o.getAttribute('data-'+lang) || o.textContent;
+  });
+  // Rebuild dynamic content
+  renderLibGrid();
+  if(libChord){ updateChordInfo(); renderInvTabs(); showInversion(libInv); }
+  renderDetect();
+  buildKeySigButtons();
+  if(nrCurrent){ drawStaff(nrCurrent); renderNROptions(nrCurrent); drawKbdHint(nrCurrent); }
+}
+
+function buildKeySigButtons(){
+  const container=document.getElementById('nr-keysig-btns');
+  if(!container)return;
+  container.innerHTML=KEY_SIGS.map(k=>{
+    const lbl=currentLang==='de'?k.label_de:k.label_en;
+    const isActive=k.id===currentKeySig.id;
+    return`<button class="nr-keysig-btn${isActive?' active':''}" data-id="${k.id}"
+      onclick="setNRKeySig('${k.id}')">${lbl}</button>`;
+  }).join('');
+}
+
+// Patch MIDI status to update both spans
+const _origSetMS = setMS;
+function setMS(cls, txt){
+  document.getElementById('midi-dot').className = 'midi-dot ' + cls;
+  const map = {
+    'MIDI nicht verbunden': 'MIDI not connected',
+    'Kein MIDI-Gerät':       'No MIDI device',
+    'MIDI Zugriff verweigert':'MIDI access denied',
+    '':''
+  };
+  const enTxt = map[txt] || txt; // device names pass through unchanged
+  document.getElementById('midi-label-de').textContent = txt;
+  document.getElementById('midi-label-en').textContent = enTxt;
+}
+
+// Patch showPage to handle sheets tab and not reference favorites
+function showPage(id, btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='notenlesen'&&!nrCurrent) nextNRQuestion();
+  if(id==='quinten') initQZ();
+}
+
+// Patch detect note count to be lang-aware
+const _origRenderDetect = renderDetect;
+function renderDetect(){
+  const notes=[...detSelected];
+  const sortedPCs=[...new Set(notes.map(m=>((m%12)+12)%12))].sort((a,b)=>a-b);
+  document.getElementById('det-note-count').textContent =
+    sortedPCs.length + ' ' + t('Töne ausgewählt','notes selected');
+  hlKeys('keyboard-det',[{midis:notes,cls:'detect'}]);
+  document.getElementById('notes-det-display').innerHTML=
+    sortedPCs.map(pc=>`<div class="note-pill active">${N[pc]}</div>`).join('');
+  const res=matchChords(notes);
+  const el=document.getElementById('detect-results');
+  if(!sortedPCs.length){
+    el.innerHTML=`<div class="detect-hint">${t('Wähle 2 oder mehr Töne','Select 2 or more notes')}</div>`;return;
+  }
+  if(sortedPCs.length===1){
+    el.innerHTML=`<div class="detect-hint">${t('Noch mehr Töne wählen','Select more notes')}</div>`;return;
+  }
+  if(!res.length){
+    el.innerHTML=`<div class="detect-hint">${t('Kein bekannter Akkord erkannt','No known chord detected')}</div>`;return;
+  }
+  const exact=res.filter(r=>r.type==='exact');
+  const rootless=res.filter(r=>r.type==='rootless');
+  let html='';
+  if(exact.length){
+    html+=`<div class="detect-section-label">${t('Exakt','Exact')} (${exact.length})</div>`;
+    html+=exact.map((r,i)=>{
+      const clef=bestClefForMidi(r.ch.midiBase);
+      const staffSvg=drawMiniStaffSVG(r.ch.midiBase,clef);
+      return`<div class="detect-match ${i===0?'top':''}" onclick="showDetMatch('${r.ch.root}','${r.ch.sym}')">
+        <div class="dm-name">${r.ch.displayName}</div>
+        <div class="dm-type">${r.ch.name}</div>
+        ${staffSvg}
+      </div>`;
+    }).join('');
+  }
+  if(rootless.length){
+    html+=`<div class="detect-section-label rootless">${t('Rootlos — +Bass','Rootless — +Bass')} (${rootless.length})</div>`;
+    html+=rootless.slice(0,12).map(r=>{
+      const miss=N[r.missing[0]];
+      const clef=bestClefForMidi(r.ch.midiBase);
+      const staffSvg=drawMiniStaffSVG(r.ch.midiBase,clef);
+      return`<div class="detect-match rootless" onclick="showDetMatch('${r.ch.root}','${r.ch.sym}')">
+        <div class="dm-name">${r.ch.displayName}</div>
+        <div class="dm-type">+${miss} ${t('als Bass','as Bass')}</div>
+        ${staffSvg}
+      </div>`;
+    }).join('');
+  }
+  el.innerHTML=html;
+}
+
+// Patch practice feedback
+// setFb patched inline above
+// nextChord patches below
+
+// Patch NR option display (B→H only in German)
+const _origRenderNROptions = renderNROptions;
+function renderNROptions(note){
+  // Build distractors: same base note but different accidentals, or nearby notes
+  const pool = getNRPool();
+  const correctLabel = currentLang==='de' ? note.label_de : note.label_en;
+
+  // Build 3 distractors
+  const distractors = new Set();
+
+  // Always add accidental variants as distractors if relevant
+  if(note.acc==='#'){
+    distractors.add({de:note.label_de.replace('♯',''), en:note.label_en.replace('♯','')});
+    distractors.add({de:(note.name==='B'?'H':note.name)+'♭'+note.oct, en:note.name+'♭'+note.oct});
+  } else if(note.acc==='b'){
+    distractors.add({de:(note.name==='B'?'H':note.name)+note.oct, en:note.name+note.oct});
+    distractors.add({de:(note.name==='B'?'H':note.name)+'♯'+note.oct, en:note.name+'♯'+note.oct});
+  }
+
+  // Add some other random notes from pool (built with same diff)
+  const shuffled=[...pool].sort(()=>Math.random()-.5);
+  for(const base of shuffled){
+    if(distractors.size>=3)break;
+    const n=buildNRNote(base);
+    const lbl=currentLang==='de'?n.label_de:n.label_en;
+    if(lbl!==correctLabel && ![...distractors].some(d=>(currentLang==='de'?d.de:d.en)===lbl)){
+      distractors.add({de:n.label_de,en:n.label_en});
+    }
+  }
+
+  // Build options array: correct + 3 distractors, shuffled
+  const opts=[{de:note.label_de,en:note.label_en},...[...distractors].slice(0,3)]
+    .sort(()=>Math.random()-.5);
+
+  const container=document.getElementById('nr-options');
+  container.innerHTML=opts.map(opt=>{
+    const display=currentLang==='de'?opt.de:opt.en;
+    const correctDe=note.label_de.replace(/'/g,"\'");
+    const correctEn=note.label_en.replace(/'/g,"\'");
+    const dispSafe=display.replace(/'/g,"\'");
+    return`<button class="nr-opt" onclick="checkNRAnswerNew('${dispSafe}','${correctDe}','${correctEn}')">` +
+      display + '</button>';
+  }).join('');
+}
+
+function checkNRAnswerNew(chosen, correctDe, correctEn){
+  const correct = currentLang==='de' ? correctDe : correctEn;
+  checkNRAnswer(chosen, correct);
+}
+
+// Patch checkNRAnswer feedback to be lang-aware
+function checkNRAnswer(chosen,correct){
+  if(nrAnswered)return;
+  nrAnswered=true;
+  const fb=document.getElementById('nr-feedback');
+  renderNROptionsResult(correct,chosen);
+  if(chosen===correct){
+    nrCorrect++;nrStreak++;
+    fb.textContent=t('✓ Richtig! ','✓ Correct! ')+correct;
+    fb.className='nr-feedback ok';
+  } else {
+    nrWrong++;nrStreak=0;
+    fb.textContent=t('✗ Falsch. Es war: ','✗ Wrong. It was: ')+correct;
+    fb.className='nr-feedback no';
+  }
+  document.getElementById('nr-correct').textContent=nrCorrect;
+  document.getElementById('nr-wrong').textContent=nrWrong;
+  document.getElementById('nr-streak').textContent=nrStreak;
+}
+
+
+// ════════════════════════════════════════════════════════
+// QUINTENZIRKEL
+// ════════════════════════════════════════════════════════
+
+// All 12 keys in circle-of-fifths order (starting at C=top)
+const QZ_KEYS = [
+  // id, major name DE/EN, minor DE/EN, sharps[], flats[], 
+  // scale notes (DE), scale notes (EN), 
+  // fingering RH, fingering LH
+  {
+    id:'C', pos:0,
+    maj_de:'C-Dur',    maj_en:'C Major',
+    min_de:'a-Moll',   min_en:'A minor',
+    sharps:[], flats:[],
+    scale:['C','D','E','F','G','A','H'],
+    scale_en:['C','D','E','F','G','A','B'],
+    acc_notes:[], // no accidentals
+    rh:[1,2,3,1,2,3,4,5],
+    lh:[5,4,3,2,1,3,2,1],
+  },
+  {
+    id:'G', pos:1,
+    maj_de:'G-Dur',    maj_en:'G Major',
+    min_de:'e-Moll',   min_en:'E minor',
+    sharps:['F'], flats:[],
+    scale:['G','A','H','C','D','E','Fis'],
+    scale_en:['G','A','B','C','D','E','F#'],
+    acc_notes:['F'],
+    rh:[1,2,3,1,2,3,4,5],
+    lh:[5,4,3,2,1,3,2,1],
+  },
+  {
+    id:'D', pos:2,
+    maj_de:'D-Dur',    maj_en:'D Major',
+    min_de:'h-Moll',   min_en:'B minor',
+    sharps:['F','C'], flats:[],
+    scale:['D','E','Fis','G','A','H','Cis'],
+    scale_en:['D','E','F#','G','A','B','C#'],
+    acc_notes:['F','C'],
+    rh:[1,2,3,1,2,3,4,5],
+    lh:[5,4,3,2,1,3,2,1],
+  },
+  {
+    id:'A', pos:3,
+    maj_de:'A-Dur',    maj_en:'A Major',
+    min_de:'fis-Moll', min_en:'F# minor',
+    sharps:['F','C','G'], flats:[],
+    scale:['A','H','Cis','D','E','Fis','Gis'],
+    scale_en:['A','B','C#','D','E','F#','G#'],
+    acc_notes:['F','C','G'],
+    rh:[1,2,3,1,2,3,4,5],
+    lh:[5,4,3,2,1,3,2,1],
+  },
+  {
+    id:'E', pos:4,
+    maj_de:'E-Dur',    maj_en:'E Major',
+    min_de:'cis-Moll', min_en:'C# minor',
+    sharps:['F','C','G','D'], flats:[],
+    scale:['E','Fis','Gis','A','H','Cis','Dis'],
+    scale_en:['E','F#','G#','A','B','C#','D#'],
+    acc_notes:['F','C','G','D'],
+    rh:[1,2,3,1,2,3,4,5],
+    lh:[5,4,3,2,1,3,2,1],
+  },
+  {
+    id:'B', pos:5,
+    maj_de:'H-Dur',    maj_en:'B Major',
+    min_de:'gis-Moll', min_en:'G# minor',
+    sharps:['F','C','G','D','A'], flats:[],
+    scale:['H','Cis','Dis','E','Fis','Gis','Ais'],
+    scale_en:['B','C#','D#','E','F#','G#','A#'],
+    acc_notes:['F','C','G','D','A'],
+    rh:[1,2,3,1,2,3,4,5],
+    lh:[4,3,2,1,4,3,2,1],
+  },
+  {
+    id:'Gb', pos:6,
+    maj_de:'Ges-Dur',  maj_en:'Gb Major',
+    min_de:'es-Moll',  min_en:'Eb minor',
+    sharps:[], flats:['B','E','A','D','G','C'],
+    scale:['Ges','As','B','Ces','Des','Es','F'],
+    scale_en:['Gb','Ab','Bb','Cb','Db','Eb','F'],
+    acc_notes:['B','E','A','D','G','C'],
+    rh:[2,3,4,1,2,3,1,2],
+    lh:[4,3,2,1,3,2,1,4],
+  },
+  {
+    id:'Db', pos:7,
+    maj_de:'Des-Dur',  maj_en:'Db Major',
+    min_de:'b-Moll',   min_en:'Bb minor',
+    sharps:[], flats:['B','E','A','D','G'],
+    scale:['Des','Es','F','Ges','As','B','C'],
+    scale_en:['Db','Eb','F','Gb','Ab','Bb','C'],
+    acc_notes:['B','E','A','D','G'],
+    rh:[2,3,1,2,3,4,1,2],
+    lh:[3,2,1,4,3,2,1,3],
+  },
+  {
+    id:'Ab', pos:8,
+    maj_de:'As-Dur',   maj_en:'Ab Major',
+    min_de:'f-Moll',   min_en:'F minor',
+    sharps:[], flats:['B','E','A','D'],
+    scale:['As','B','C','Des','Es','F','G'],
+    scale_en:['Ab','Bb','C','Db','Eb','F','G'],
+    acc_notes:['B','E','A','D'],
+    rh:[2,3,1,2,3,1,2,3],
+    lh:[3,2,1,4,3,2,1,3],
+  },
+  {
+    id:'Eb', pos:9,
+    maj_de:'Es-Dur',   maj_en:'Eb Major',
+    min_de:'c-Moll',   min_en:'C minor',
+    sharps:[], flats:['B','E','A'],
+    scale:['Es','F','G','As','B','C','D'],
+    scale_en:['Eb','F','G','Ab','Bb','C','D'],
+    acc_notes:['B','E','A'],
+    rh:[2,1,2,3,1,2,3,4],
+    lh:[3,2,1,4,3,2,1,3],
+  },
+  {
+    id:'Bb', pos:10,
+    maj_de:'B-Dur',    maj_en:'Bb Major',
+    min_de:'g-Moll',   min_en:'G minor',
+    sharps:[], flats:['B','E'],
+    scale:['B','C','D','Es','F','G','A'],
+    scale_en:['Bb','C','D','Eb','F','G','A'],
+    acc_notes:['B','E'],
+    rh:[4,1,2,3,1,2,3,4],
+    lh:[3,2,1,4,3,2,1,3],
+  },
+  {
+    id:'F', pos:11,
+    maj_de:'F-Dur',    maj_en:'F Major',
+    min_de:'d-Moll',   min_en:'D minor',
+    sharps:[], flats:['B'],
+    scale:['F','G','A','B','C','D','E'],
+    scale_en:['F','G','A','Bb','C','D','E'],
+    acc_notes:['B'],
+    rh:[1,2,3,4,1,2,3,4],
+    lh:[5,4,3,2,1,3,2,1],
+  },
+];
+
+// Scale degree chord types: [type, roman, quality]
+const QZ_DEGREES = [
+  {roman:'I',   type:'major', sym:''},
+  {roman:'ii',  type:'minor', sym:'m'},
+  {roman:'iii', type:'minor', sym:'m'},
+  {roman:'IV',  type:'major', sym:''},
+  {roman:'V',   type:'major', sym:''},
+  {roman:'vi',  type:'minor', sym:'m'},
+  {roman:'vii°',type:'dim',   sym:'dim'},
+];
+
+let qzSelected = null;
+
+function initQZ(){
+  const svg = document.getElementById('qz-svg');
+  if(!svg) return;
+  const light = document.documentElement.classList.contains('light');
+  const bg    = light ? '#ffffff' : '#151820';
+  const text  = light ? '#1a1f35' : '#e8ecf5';
+  const muted = light ? '#7a82a0' : '#5a6480';
+  const border= light ? '#d4d8ea' : '#252a38';
+
+  // Radii
+  const R_OUT = 185; // outer edge
+  const R_MAJ = 140; // major names
+  const R_MIN = 100; // minor names
+  const R_ACC = 63;  // accidental count
+  const R_IN  = 42;  // inner circle
+
+  let html = `<circle cx="0" cy="0" r="${R_OUT}" fill="${bg}" stroke="${border}" stroke-width="1"/>`;
+  html += `<circle cx="0" cy="0" r="${R_IN}" fill="${bg}" stroke="${border}" stroke-width="1"/>`;
+
+  QZ_KEYS.forEach((key, i) => {
+    const angle = (i * 30 - 90) * Math.PI / 180; // 30° per key, start at top
+    const angleNext = ((i+1) * 30 - 90) * Math.PI / 180;
+    const mid = ((i * 30 - 90) + 15) * Math.PI / 180;
+
+    // Colors
+    const isSelected = qzSelected && qzSelected.id === key.id;
+    const numAcc = key.sharps.length + key.flats.length;
+    let majColor, minColor;
+    if(isSelected){
+      majColor = '#e8b84b'; minColor = '#d99020';
+    } else if(key.sharps.length > 0){
+      // Green shades for sharps
+      const intensity = 0.15 + key.sharps.length * 0.1;
+      majColor = `rgba(82,201,122,${Math.min(intensity,0.6)})`;
+      minColor = `rgba(52,170,90,${Math.min(intensity-0.05,0.5)})`;
+    } else if(key.flats.length > 0){
+      // Pink shades for flats
+      const intensity = 0.15 + key.flats.length * 0.08;
+      majColor = `rgba(240,130,130,${Math.min(intensity,0.55)})`;
+      minColor = `rgba(200,100,100,${Math.min(intensity-0.05,0.45)})`;
+    } else {
+      // C major: accent blue
+      majColor = light ? 'rgba(74,110,240,0.25)' : 'rgba(108,142,245,0.25)';
+      minColor = light ? 'rgba(74,110,240,0.15)' : 'rgba(108,142,245,0.15)';
+    }
+
+    // Helper: arc path
+    function arc(r1, r2, a1, a2){
+      const x1=Math.cos(a1)*r2, y1=Math.sin(a1)*r2;
+      const x2=Math.cos(a2)*r2, y2=Math.sin(a2)*r2;
+      const x3=Math.cos(a2)*r1, y3=Math.sin(a2)*r1;
+      const x4=Math.cos(a1)*r1, y4=Math.sin(a1)*r1;
+      return `M${x1},${y1} A${r2},${r2} 0 0,1 ${x2},${y2} L${x3},${y3} A${r1},${r1} 0 0,0 ${x4},${y4} Z`;
+    }
+
+    const gap = 0.02; // small gap between slices
+    const a1 = angle + gap, a2 = angleNext - gap;
+
+    // Major sector
+    html += `<path d="${arc(R_MAJ+2, R_OUT-2, a1, a2)}" fill="${majColor}"
+      stroke="${border}" stroke-width="0.5" class="qz-sector"
+      onclick="qzClickKey('${key.id}')" style="cursor:pointer">
+      <title>${key.maj_de}</title></path>`;
+
+    // Minor sector
+    html += `<path d="${arc(R_MIN+2, R_MAJ-2, a1, a2)}" fill="${minColor}"
+      stroke="${border}" stroke-width="0.5" class="qz-sector"
+      onclick="qzClickKey('${key.id}')" style="cursor:pointer"/>`;
+
+    // Accidental count sector
+    const accBg = light ? 'rgba(220,225,240,0.5)' : 'rgba(30,35,60,0.5)';
+    html += `<path d="${arc(R_IN+2, R_MIN-2, a1, a2)}" fill="${accBg}"
+      stroke="${border}" stroke-width="0.5" class="qz-sector"
+      onclick="qzClickKey('${key.id}')" style="cursor:pointer"/>`;
+
+    // Major name label
+    const mx = Math.cos(mid) * (R_MAJ + 24);
+    const my = Math.sin(mid) * (R_MAJ + 24);
+    const majLabel = currentLang==='de' ? key.id : key.id;
+    const dispId = key.id.replace('b','b').replace('Gb','G♭').replace('Db','D♭')
+      .replace('Ab','A♭').replace('Eb','E♭').replace('Bb','B♭')
+      .replace('B', currentLang==='de'?'H':'B');
+    html += `<text x="${mx}" y="${my+5}" text-anchor="middle"
+      font-family="Instrument Serif,serif" font-size="18"
+      fill="${isSelected ? '#1a1f35' : text}" font-weight="${isSelected?'bold':'normal'}"
+      onclick="qzClickKey('${key.id}')" style="cursor:pointer;pointer-events:all">${dispId}</text>`;
+
+    // Minor name
+    const mnx = Math.cos(mid) * (R_MIN + 16);
+    const mny = Math.sin(mid) * (R_MIN + 16);
+    // Relative minor: 9 positions back in circle
+    const minKey = QZ_KEYS[(i + 9) % 12];
+    const minId = minKey.id.toLowerCase()
+      .replace('b','b').replace('gb','g♭').replace('db','d♭')
+      .replace('ab','a♭').replace('eb','e♭').replace('bb','b♭')
+      .replace('b', currentLang==='de'?'h':'b');
+    html += `<text x="${mnx}" y="${mny+4}" text-anchor="middle"
+      font-family="Instrument Serif,serif" font-size="11" fill="${muted}"
+      onclick="qzClickKey('${key.id}')" style="cursor:pointer;pointer-events:all">${minId}</text>`;
+
+    // Accidental count
+    const acx = Math.cos(mid) * (R_ACC);
+    const acy = Math.sin(mid) * (R_ACC);
+    const accSym = key.sharps.length>0 ? key.sharps.length+'♯' :
+                   key.flats.length>0  ? key.flats.length+'♭' : '○';
+    html += `<text x="${acx}" y="${acy+4}" text-anchor="middle"
+      font-family="JetBrains Mono,monospace" font-size="10" fill="${muted}"
+      onclick="qzClickKey('${key.id}')" style="cursor:pointer;pointer-events:all">${accSym}</text>`;
+  });
+
+  // Dividing lines between sectors
+  for(let i=0;i<12;i++){
+    const a = (i*30-90)*Math.PI/180;
+    const x1=Math.cos(a)*(R_IN+2), y1=Math.sin(a)*(R_IN+2);
+    const x2=Math.cos(a)*(R_OUT-2), y2=Math.sin(a)*(R_OUT-2);
+    html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
+      stroke="${border}" stroke-width="0.8" opacity="0.5"/>`;
+  }
+
+  // Center text
+  const centerTxt = qzSelected ?
+    (currentLang==='de' ? qzSelected.maj_de : qzSelected.maj_en) :
+    (currentLang==='de' ? 'Tonart' : 'Key');
+  html += `<text x="0" y="4" text-anchor="middle"
+    font-family="Instrument Serif,serif" font-size="13"
+    fill="${muted}">${centerTxt}</text>`;
+
+  svg.innerHTML = html;
+}
+
+function qzClickKey(id){
+  qzSelected = QZ_KEYS.find(k=>k.id===id);
+  initQZ();
+  renderQZInfo();
+}
+
+function renderQZInfo(){
+  const panel = document.getElementById('qz-info');
+  if(!qzSelected){ panel.innerHTML=''; return; }
+  const k = qzSelected;
+  const de = currentLang==='de';
+
+  const majName = de ? k.maj_de : k.maj_en;
+  const minName = de ? k.min_de : k.min_en;
+  const scale   = de ? k.scale : k.scale_en;
+
+  // Scale steps: major = W W H W W W H
+  const steps = [2,2,1,2,2,2,1];
+  const stepLabel = de ? ['G','G','H','G','G','G','H'] : ['W','W','H','W','W','W','H'];
+
+  // Accidental display
+  const accHtml = k.sharps.length>0
+    ? k.sharps.map(n=>`<span class="qz-badge sharp">${n}♯</span>`).join('')
+    : k.flats.length>0
+    ? k.flats.map(n=>`<span class="qz-badge flat">${n}♭</span>`).join('')
+    : `<span class="qz-badge">${de?'Keine Vorzeichen':'No accidentals'}</span>`;
+
+  // Degree chords
+  const degChords = QZ_DEGREES.map((d,i) => {
+    const root = scale[i];
+    const name = root + (d.sym ? ' '+d.sym : '');
+    return `<div class="qz-chord-tile ${d.type}" onclick="qzChordClick('${root}','${d.sym}')">
+      <div class="deg">${d.roman}</div>
+      <div class="cname">${name}</div>
+    </div>`;
+  }).join('');
+
+  // Fingering
+  const fingerColors = ['','f1','f2','f3','f4','f5'];
+  function renderFingering(fingers, notes){
+    return fingers.map((f,i) => `
+      <div class="qz-note">
+        <div class="qz-finger f${f}">${f}</div>
+        <div class="qz-finger-note">${notes[i]||''}</div>
+      </div>`).join('');
+  }
+
+  // Scale including octave return
+  const scaleOct = [...scale, scale[0]];
+  const rhFing = [...k.rh];
+  const lhFing = [...k.lh];
+
+  // Mini staff for scale
+  const staffHtml = renderQZStaff(k);
+
+  panel.innerHTML = `
+    <!-- Key name card -->
+    <div class="qz-card">
+      <div class="qz-card-title">${de?'Tonart':'Key'}</div>
+      <div class="qz-key-name">${majName}</div>
+      <div class="qz-key-sub">${de?'Parallele Molltonart':'Relative minor'}: <b>${minName}</b></div>
+      <div class="qz-badges" style="margin-top:10px">${accHtml}</div>
+    </div>
+
+    <!-- Scale card -->
+    <div class="qz-card">
+      <div class="qz-card-title">${de?'Tonleiter':'Scale'}</div>
+      <div class="qz-scale">
+        ${scaleOct.map((n,i) => {
+          const baseNote = n.replace(/is|es|s$/,'').replace(/Cis/,'C').charAt(0);
+          const isAcc = i<7 && k.acc_notes.includes(baseNote);
+          const isTonic = i===0||i===7;
+          return `<div class="qz-note">
+            <div class="qz-note-name${isTonic?' tonic':''}${isAcc?' acc':''}">${n}</div>
+            <div class="qz-note-deg">${i===7?'8':(i+1)}</div>
+          </div>${i<7?`<div class="qz-step">${stepLabel[i]}</div>`:''}`
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- Degree chords -->
+    <div class="qz-card">
+      <div class="qz-card-title">${de?'Stufenakkorde':'Scale Chords'}</div>
+      <div class="qz-chords">${degChords}</div>
+      <div style="font-size:.62rem;color:var(--muted);margin-top:8px;font-family:'JetBrains Mono',monospace">
+        <span style="color:var(--accent2)">■</span> ${de?'Dur':'Major'} &nbsp;
+        <span style="color:var(--green)">■</span> ${de?'Moll':'Minor'} &nbsp;
+        <span style="color:var(--red)">■</span> ${de?'Vermindert':'Diminished'}
+      </div>
+    </div>
+
+    <!-- Staff -->
+    <div class="qz-card">
+      <div class="qz-card-title">${de?'Tonleiter im Notensystem':'Scale on Staff'}</div>
+      ${staffHtml}
+    </div>
+
+    <!-- Fingering -->
+    <div class="qz-card">
+      <div class="qz-card-title">${de?'Fingersatz':'Fingering'}</div>
+      <div class="qz-fingering">
+        <div class="qz-hand">
+          <div class="qz-hand-label">${de?'Rechte Hand':'Right Hand'}</div>
+          <div class="qz-fingers">${renderFingering(rhFing, scaleOct)}</div>
+        </div>
+        <div class="qz-hand">
+          <div class="qz-hand-label">${de?'Linke Hand':'Left Hand'}</div>
+          <div class="qz-fingers">${renderFingering(lhFing, [...scaleOct].reverse())}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderQZStaff(key){
+  // Draw treble staff with scale notes
+  const light = document.documentElement.classList.contains('light');
+  const lineC = light?'#5a6480':'#3a4260';
+  const noteC = light?'#4a6ef0':'#6c8ef5';
+  const accC  = light?'#c47c10':'#e8b84b';
+  const bg    = light?'#ffffff':'#151820';
+
+  const W=400, H=80, mx=30, LS=9, lineY0=18;
+  const bottomY = lineY0+4*LS;
+
+  function spToY(sp){ return bottomY-(sp-2)*(LS/2); }
+
+  // Map note names to treble staff positions
+  const NOTE_SP = {C:0,D:1,E:2,F:3,G:4,A:5,B:6,H:6}; // sp relative to C4
+  // We'll place notes in octave 4/5
+  const scaleNotes = [...key.scale, key.scale[0]]; // 8 notes
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="qz-staff-svg">`;
+  svg += `<rect width="${W}" height="${H}" fill="${bg}" rx="4"/>`;
+
+  // Key sig width
+  const ksCount = key.sharps.length + key.flats.length;
+  const clefW = 26;
+  const ksW = ksCount * 9;
+  const noteSpacing = (W - mx - clefW - ksW - 20) / 8;
+  const firstNoteX = mx + clefW + ksW + 14;
+
+  // Staff lines
+  for(let i=0;i<5;i++){
+    const y=lineY0+i*LS;
+    svg+=`<line x1="${mx}" y1="${y}" x2="${W-4}" y2="${y}" stroke="${lineC}" stroke-width="1"/>`;
+  }
+
+  // Treble clef
+  svg+=`<text x="${mx+2}" y="${bottomY+6}" font-size="40" font-family="serif" fill="${lineC}" opacity=".8">𝄞</text>`;
+
+  // Key signature
+  if(ksCount>0){
+    const spArr = key.sharps.length>0 ? SHARP_SP_TREBLE : FLAT_SP_TREBLE;
+    const sym = key.sharps.length>0 ? '♯' : '♭';
+    const cnt = key.sharps.length||key.flats.length;
+    for(let i=0;i<cnt;i++){
+      const ky=spToY(spArr[i]);
+      svg+=`<text x="${mx+clefW+i*9}" y="${ky+4}" font-size="10" font-family="serif"
+        fill="${accC}" font-weight="bold">${sym}</text>`;
+    }
+  }
+
+  // Notes
+  scaleNotes.forEach((noteName, i) => {
+    const x = firstNoteX + i * noteSpacing;
+    // Parse note name to get base letter and accidental
+    const base = noteName.charAt(0).toUpperCase();
+    const hasSharp = noteName.includes('is') && !noteName.includes('es');
+    const hasFlat = noteName.endsWith('es') || noteName.endsWith('s') && !noteName.includes('is');
+    // Determine octave: first 4 notes in oct 4, rest oct 5
+    const sp_base = NOTE_SP[base] || 0;
+    const sp = sp_base + (sp_base < 2 ? 7 : 0); // boost C,D to next position if needed
+    // Actually use simpler positioning: sp 0-6 for C4-B4, 7-13 for C5-B5
+    // C=0, D=1, E=2, F=3, G=4, A=5, B/H=6 in oct4; +7 for oct5
+    let spFinal = sp_base;
+    // For scale: notes go up, so if sp < previous, add octave
+    if(i>0){
+      const prevBase = scaleNotes[i-1].charAt(0).toUpperCase();
+      const prevSp = NOTE_SP[prevBase]||0;
+      if(sp_base < prevSp - 2) spFinal = sp_base + 7;
+      else spFinal = sp_base + (i >= 4 ? 7 : 0);
+    }
+    const y = spToY(spFinal);
+    const isTonic = i===0||i===7;
+
+    // Ledger line for C
+    if(spFinal===0) svg+=`<line x1="${x-7}" y1="${bottomY+LS}" x2="${x+7}" y2="${bottomY+LS}" stroke="${lineC}" stroke-width="1"/>`;
+    if(y>bottomY+LS/2){
+      for(let ly=bottomY+LS;ly<=y+1;ly+=LS)
+        svg+=`<line x1="${x-7}" y1="${ly}" x2="${x+7}" y2="${ly}" stroke="${lineC}" stroke-width="1"/>`;
+    }
+    if(y<lineY0-LS/2){
+      for(let ly=lineY0-LS;ly>=y-1;ly-=LS)
+        svg+=`<line x1="${x-7}" y1="${ly}" x2="${x+7}" y2="${ly}" stroke="${lineC}" stroke-width="1"/>`;
+    }
+
+    // Accidental (for medium/super in the scale display – not key sig ones)
+    if((hasSharp||hasFlat) && !key.sharps.includes(base) && !key.flats.includes(base)){
+      svg+=`<text x="${x-10}" y="${y+4}" font-size="9" font-family="serif"
+        fill="${accC}" font-weight="bold">${hasSharp?'♯':'♭'}</text>`;
+    }
+
+    const fill = isTonic ? light?'#4a6ef0':'#6c8ef5' : noteC;
+    svg+=`<ellipse cx="${x}" cy="${y}" rx="6.5" ry="4.5"
+      fill="${fill}" transform="rotate(-12,${x},${y})" opacity="${isTonic?1:0.75}"/>`;
+    if(spFinal<6)
+      svg+=`<line x1="${x+6}" y1="${y}" x2="${x+6}" y2="${y-22}" stroke="${fill}" stroke-width="1.5" opacity=".8"/>`;
+    else
+      svg+=`<line x1="${x-6}" y1="${y}" x2="${x-6}" y2="${y+22}" stroke="${fill}" stroke-width="1.5" opacity=".8"/>`;
+  });
+
+  svg+='</svg>';
+  return svg;
+}
+
+function qzChordClick(root, sym){
+  // Navigate to library and highlight the chord
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-library').classList.add('active');
+  document.querySelectorAll('.tab')[0].classList.add('active');
+
+  // Map note name to library root
+  const rootMap = {
+    'H':'B','Cis':'C#','Dis':'D#','Fis':'F#','Gis':'G#','Ais':'A#',
+    'Ces':'C','Des':'D','Es':'Eb','Ges':'F#','As':'Ab','B':'Bb',
+    'Ges':'Gb'
+  };
+  const libRoot = rootMap[root] || root;
+  // sym map
+  const symMap = {'':'','m':'m','dim':'dim'};
+  const libSym = symMap[sym]||sym;
+
+  libRoot && setTimeout(()=>{
+    // Click root button
+    const rbtn = [...document.querySelectorAll('.root-btn')].find(b=>b.textContent.trim()===libRoot);
+    if(rbtn) rbtn.click();
+    // Find chord card
+    setTimeout(()=>{
+      const cards = [...document.querySelectorAll('.lib-card')];
+      const target = cards.find(c=>{
+        const n=c.querySelector('.lc-name')?.textContent||'';
+        return n === libRoot+(libSym?(' '+libSym):'');
+      });
+      if(target){target.scrollIntoView({behavior:'smooth',block:'nearest'});target.click();}
+    },100);
+  },50);
+}
+
+// Re-render QZ when theme changes
+const _origToggleTheme = toggleTheme;
+function toggleTheme(){
+  _origToggleTheme();
+  if(document.getElementById('page-quinten').classList.contains('active')){
+    initQZ();
+    if(qzSelected) renderQZInfo();
+  }
+}
+
+// Re-render QZ when lang changes
+const _origSetLang = setLang;
+function setLang(lang){
+  _origSetLang(lang);
+  if(document.getElementById('qz-svg')){
+    initQZ();
+    if(qzSelected) renderQZInfo();
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════
+buildKeyboard('keyboard-lib');
+buildKeyboard('keyboard-prac');
+buildKeyboard('keyboard-det', 48, 83, onDetKeyClick);
+buildLibNav();
+renderLibGrid();
+buildKeySigButtons();
+initMIDI();
+// Default: light theme, German
+document.documentElement.classList.add('light');
+document.getElementById('theme-btn').textContent='☾ Dunkel';
+setLang('de');
+// Set initial feedback text
+document.getElementById('practice-feedback').innerHTML=
+  '<span class="de">MIDI-Keyboard anschließen und Übung starten</span>' +
+  '<span class="en">Connect MIDI keyboard and start practice</span>';
+</script>
+
+<!-- ═══ QUINTENZIRKEL ═══ -->
+<div class="page" id="page-quinten">
+  <div class="qz-layout">
+    <!-- Left: Circle SVG -->
+    <div class="qz-circle-wrap">
+      <svg id="qz-svg" viewBox="-200 -200 400 400" class="qz-svg"></svg>
+      <div class="qz-legend">
+        <span class="qz-leg-dot" style="background:#6c8ef5"></span>
+        <span class="de">Dur</span><span class="en">Major</span>
+        <span class="qz-leg-dot" style="background:#52c97a;margin-left:10px"></span>
+        <span class="de">Moll (parallel)</span><span class="en">Minor (relative)</span>
+      </div>
+    </div>
+    <!-- Right: Info panel -->
+    <div class="qz-info" id="qz-info">
+      <div class="qz-placeholder">
+        <div style="font-size:2.5rem;margin-bottom:10px">𝄞</div>
+        <span class="de">Tonart im Zirkel anklicken</span>
+        <span class="en">Click a key in the circle</span>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

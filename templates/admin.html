@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klaviertrainer – Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f2f8;--surface:#fff;--surface2:#e8ebf5;--border:#d4d8ea;
+  --accent:#4a6ef0;--accent2:#3558e0;--accent-dim:rgba(74,110,240,.08);
+  --red:#e03535;--red-dim:rgba(224,53,53,.08);
+  --green:#1e9950;--green-dim:rgba(30,153,80,.08);
+  --text:#1a1f35;--muted:#7a82a0;--gold:#c47c10;
+  --radius:10px;--radius-sm:6px;
+  --shadow:0 2px 12px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.logo{font-family:'Instrument Serif',serif;font-size:1.3rem;color:var(--accent2)}
+.logo span{color:var(--gold);font-style:italic}
+.logo-sub{font-size:.7rem;font-family:'JetBrains Mono',monospace;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+.header-right{display:flex;gap:10px;align-items:center}
+
+main{max-width:900px;margin:32px auto;padding:0 24px;display:flex;flex-direction:column;gap:24px}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);overflow:hidden}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;
+  align-items:center;gap:8px}
+.card-header h2{font-size:.95rem;font-weight:700;color:var(--text)}
+.card-header .count{background:var(--accent);color:#fff;border-radius:20px;
+  padding:1px 8px;font-size:.65rem;font-family:'JetBrains Mono',monospace;font-weight:600}
+.card-body{padding:20px}
+
+/* Flash messages */
+.flash{padding:10px 16px;border-radius:var(--radius-sm);font-size:.82rem;font-weight:500;
+  margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.flash.error{background:var(--red-dim);border:1px solid var(--red);color:var(--red)}
+.flash.success{background:var(--green-dim);border:1px solid var(--green);color:var(--green)}
+
+/* User table */
+.user-table{width:100%;border-collapse:collapse}
+.user-table th{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;
+  font-family:'JetBrains Mono',monospace;color:var(--muted);font-weight:600;
+  padding:8px 12px;text-align:left;border-bottom:2px solid var(--border)}
+.user-table td{padding:12px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.user-table tr:last-child td{border-bottom:none}
+.user-table tr:hover td{background:var(--accent-dim)}
+
+.username{font-weight:600;font-size:.9rem}
+.user-meta{font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.62rem;
+  font-weight:600;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em}
+.badge.admin{background:var(--accent-dim);color:var(--accent2);border:1px solid var(--accent)}
+.badge.user{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+
+/* Buttons */
+.btn{font-family:'JetBrains Mono',monospace;font-size:.64rem;text-transform:uppercase;
+  letter-spacing:.08em;padding:6px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);
+  cursor:pointer;transition:all .2s;background:var(--surface);color:var(--text);font-weight:500;
+  text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent2)}
+.btn.danger{border-color:var(--red);color:var(--red)}
+.btn.danger:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.btn.sm{padding:4px 9px;font-size:.6rem}
+.btn[disabled]{opacity:.4;cursor:not-allowed;pointer-events:none}
+
+/* Create user form */
+.create-form{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;align-items:end}
+.field label{display:block;font-size:.65rem;font-family:'JetBrains Mono',monospace;
+  text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px;font-weight:600}
+input[type=text],input[type=password]{width:100%;background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-size:.85rem;outline:none;
+  font-family:'Plus Jakarta Sans',sans-serif;transition:border-color .2s}
+input:focus{border-color:var(--accent)}
+.checkbox-field{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted);
+  cursor:pointer;padding-bottom:2px}
+.checkbox-field input{width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
+
+/* Password reset modal */
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;
+  align-items:center;justify-content:center}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius);padding:28px;width:100%;
+  max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.modal h3{font-size:1rem;margin-bottom:16px;color:var(--text)}
+.modal .field{margin-bottom:14px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+
+@media(max-width:600px){
+  .create-form{grid-template-columns:1fr 1fr;}.create-form .btn{grid-column:span 2}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">Klavier<span>trainer</span></div>
+    <div class="logo-sub">Admin Panel</div>
+  </div>
+  <div class="header-right">
+    <a href="/" class="btn">← Zur App</a>
+    <form method="post" action="/api/logout" style="display:inline"
+          onsubmit="fetch('/api/logout',{method:'POST'}).then(()=>window.location='/login');return false;">
+      <button type="submit" class="btn danger">Abmelden</button>
+    </form>
+  </div>
+</header>
+
+<main>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <!-- Create user -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Neuen User anlegen</h2>
+    </div>
+    <div class="card-body">
+      <form method="post" action="/admin/create">
+        <div class="create-form">
+          <div class="field">
+            <label>Benutzername</label>
+            <input type="text" name="username" placeholder="Mindestens 3 Zeichen" required autocomplete="off">
+          </div>
+          <div class="field">
+            <label>Passwort</label>
+            <input type="password" name="password" placeholder="Mindestens 6 Zeichen" required autocomplete="new-password">
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <label class="checkbox-field">
+              <input type="checkbox" name="is_admin" value="1">
+              Admin
+            </label>
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button type="submit" class="btn primary">+ Anlegen</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- User list -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Alle User</h2>
+      <span class="count">{{ users|length }}</span>
+    </div>
+    <div class="card-body" style="padding:0">
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Rolle</th>
+            <th style="text-align:center">Favoriten</th>
+            <th style="text-align:center">PDFs</th>
+            <th style="text-align:right">Aktionen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>
+              <div class="username">{{ u.username }}</div>
+              <div class="user-meta">
+                ID {{ u.id }} · 
+                {% set ts = u.created %}
+                Erstellt {{ ts }}
+              </div>
+            </td>
+            <td>
+              <span class="badge {{ 'admin' if u.is_admin else 'user' }}">
+                {{ 'Admin' if u.is_admin else 'User' }}
+              </span>
+            </td>
+            <td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:.8rem">
+              {{ u.fav_count }}
+            </td>
+            <td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:.8rem">
+              {{ u.pdf_count }}
+            </td>
+            <td>
+              <div class="actions">
+                <!-- Reset password -->
+                <button class="btn sm" onclick="openResetModal({{ u.id }}, '{{ u.username }}')">
+                  🔑 Passwort
+                </button>
+                <!-- Toggle admin -->
+                <form method="post" action="/admin/toggle-admin/{{ u.id }}"
+                      {% if u.id == current_user_id %}style="display:none"{% endif %}>
+                  <button type="submit" class="btn sm"
+                          title="{{ 'Admin entfernen' if u.is_admin else 'Zum Admin machen' }}">
+                    {{ '↓ User' if u.is_admin else '↑ Admin' }}
+                  </button>
+                </form>
+                <!-- Delete -->
+                {% if u.id != current_user_id %}
+                <form method="post" action="/admin/delete/{{ u.id }}"
+                      onsubmit="return confirm('User {{ u.username }} wirklich löschen? Alle Favoriten und PDFs werden gelöscht.')">
+                  <button type="submit" class="btn sm danger">✕ Löschen</button>
+                </form>
+                {% else %}
+                <button class="btn sm danger" disabled title="Eigenen Account nicht löschbar">✕</button>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- Password Reset Modal -->
+<div class="modal-backdrop" id="reset-modal">
+  <div class="modal">
+    <h3>Passwort zurücksetzen für <span id="reset-username" style="color:var(--accent2)"></span></h3>
+    <form method="post" id="reset-form" action="">
+      <div class="field">
+        <label>Neues Passwort</label>
+        <input type="password" name="password" id="reset-pw"
+               placeholder="Mindestens 6 Zeichen" required autocomplete="new-password">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="closeResetModal()">Abbrechen</button>
+        <button type="submit" class="btn primary">Speichern</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openResetModal(userId, username){
+  document.getElementById('reset-username').textContent = username;
+  document.getElementById('reset-form').action = '/admin/reset-password/' + userId;
+  document.getElementById('reset-pw').value = '';
+  document.getElementById('reset-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('reset-pw').focus(), 50);
+}
+function closeResetModal(){
+  document.getElementById('reset-modal').classList.remove('open');
+}
+document.getElementById('reset-modal').addEventListener('click', function(e){
+  if(e.target === this) closeResetModal();
+});
+</script>
+</body>
+</html>
