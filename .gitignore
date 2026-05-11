@@ -18,3 +18,6 @@ uploads/
 
 # macOS
 .DS_Store
+uwsgi.ini
+uwsgi.log
+*.sqlite3
